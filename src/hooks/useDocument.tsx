@@ -33,6 +33,7 @@ export const useDocument = <T extends DocumentData>(collectionName: string | und
        
         const ref = doc(db, collectionName, id);
 
+        setIsPending(true)
         const unsub = onSnapshot(
             ref,
             (snapshot) => {

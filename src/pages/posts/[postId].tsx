@@ -5,7 +5,7 @@ import BlogNavbar from '../../components/BlogNavbar';
 import PostComment from '../../components/PostComment'; 
 import Reaction from '../../components/Reaction'; 
 import { useState, useEffect } from 'react';
-import { Post } from '@/Types';
+import { Post } from '../../Types';
 
 
 const PostPage:  React.FC  = () => {

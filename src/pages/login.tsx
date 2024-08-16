@@ -8,14 +8,14 @@ import useGoogle from "../hooks/useGoogle";
 import GoogleButton from "../components/GoogleButton";
 import BG from "../../public/img/bg.jpg";
 import '@fortawesome/fontawesome-free/css/all.min.css';
-import Footer from "@/components/Footer";
-import MainNavbar from "@/components/MainNavbar";
+import Footer from "../components/Footer";
+import MainNavbar from "../components/MainNavbar";
 
 const Login: React.FC = () => {
     const [email, setEmail] = useState<string>("");
     const [password, setPassword] = useState<string>("");
     const [textType, setTextType] = useState<boolean>(false);
-    const { login, isPending, error } = useLogin();
+    const { login, isPending, message } = useLogin();
     const { googleSignIn, error: signinError, isPending: signinPending } = useGoogle();
 
     const handleInputType = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -31,7 +31,9 @@ const Login: React.FC = () => {
         <>
             <MainNavbar />
             <div className="min-h-screen flex flex-col items-center justify-center bg-gray-200 dark:bg-gray-900 py-4">
-                <form onSubmit={handleSubmit} className="bg-gray-200 dark:bg-gray-800 shadow-lg rounded-lg p-4 grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 w-full max-w-4xl">
+                <form 
+                    onSubmit={handleSubmit} className="bg-gray-200 dark:bg-gray-800 shadow-lg rounded-lg p-4 grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 w-full max-w-4xl"
+                >
                     <div className="relative w-full h-64 md:h-auto">
                         <Image
                             src={BG}
@@ -42,7 +44,9 @@ const Login: React.FC = () => {
                             priority
                         />
                         <div className="absolute inset-0 flex flex-col justify-center items-center text-center p-4 bg-opacity-50 bg-black rounded-lg">
-                            <h1 className="text-2xl md:text-4xl font-bold text-white">Blowmind</h1>
+                            <h1 className="text-2xl md:text-4xl font-bold text-white">
+                                Blowmind
+                            </h1>
                             <p className="mt-2 text-sm md:text-lg font-semibold text-gray-200">
                                 Unleash the Power of Words, Connect with Like-minded Readers and Writers
                             </p>
@@ -51,6 +55,20 @@ const Login: React.FC = () => {
 
                     <div className="p-6 flex flex-col justify-between">
                         <div>
+                           {message && (
+                            <div 
+                                className={`mt-4${
+                                    message.type === "Error" ? "text-red-600" : "text-green-600"
+                                }`}
+                            >
+                                {message.message}
+                            </div>
+                           )} 
+                           { signinError && (
+                            <div className="text-red-600">
+                                {signinError}
+                            </div>
+                           )}
                             <div className="flex justify-between mb-4">
                                 <Link href="/signup">
                                     <button className="text-indigo-600 hover:text-indigo-800 dark:text-white dark:hover:text-gray-300">Register</button>
@@ -90,12 +108,20 @@ const Login: React.FC = () => {
                                     placeholder="Password"
                                     className="flex-grow bg-transparent outline-none text-gray-800 dark:text-gray-200" 
                                 />
-                                <button type="button" onClick={handleInputType} className="text-gray-600 dark:text-gray-400 ml-2">
-                                    <i className={textType ? "fas fa-eye-slash" : "fas fa-eye"}></i>
+                                <button 
+                                    type="button" 
+                                    onClick={handleInputType} className="text-gray-600 dark:text-gray-400 ml-2"
+                                >
+                                    <i 
+                                        className={textType ? "fas fa-eye-slash" : "fas fa-eye"}></i>
                                 </button>
                             </div>
                             
-                            {!isPending && <button className="bg-indigo-600 mb-2 text-white w-full py-2 rounded-lg hover:bg-indigo-700">Login</button>}
+                            {!isPending && (
+                                <button className="bg-indigo-600 mb-2 text-white w-full py-2 rounded-lg hover:bg-indigo-700">
+                                Login
+                                </button>
+                            )}
                             {isPending && (
                                 <button className="bg-indigo-600 text-white w-full py-2 rounded-lg" disabled>
                                     Logging In...
@@ -108,9 +134,6 @@ const Login: React.FC = () => {
                                 isPending={signinPending}
                                 text="Sign in with Google"
                             />
-
-                            {error && <div className="text-red-600 mt-4">{error}</div>}
-                            {signinError && <div className="text-red-600 mt-4">{signinError}</div>}
                         </div>
                     </div>
                 </form>

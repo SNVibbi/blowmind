@@ -83,7 +83,7 @@ export default function BlogNavbar({ screenWidth, mobileMenu, setMobileMenu }: B
                         </span>
                         <ul className="flex items-center gap-4 bg-gray-100 dark:bg-gray-700 rounded-md p-2 ml-4">
                             <li>
-                                <Link href="/#blog">
+                                <Link href="/blog">
                                     <button className="text-gray-800 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-300 transition-colors duration-300">
                                         Explore
                                     </button>
@@ -131,7 +131,7 @@ export default function BlogNavbar({ screenWidth, mobileMenu, setMobileMenu }: B
                     </span>
                     <ul className="flex flex-col items-start mt-2 gap-4">
                         <li>
-                            <Link href="/#blog">
+                            <Link href="/blog">
                                 <button
                                     onClick={handleMenuItemClick}
                                     className="text-gray-800 dark:text-indigo-800 hover:text-indigo-600 dark:hover:text-indigo-300 transition-colors duration-300"

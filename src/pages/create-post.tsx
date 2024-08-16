@@ -1,7 +1,7 @@
-import { useAuthContext } from "@/context/AuthContext";
-import { useCategory } from "@/hooks/useCategory";
-import { useDocument } from "@/hooks/useDocument";
-import { useFirestore } from "@/hooks/useFirestore";
+import { useAuthContext } from "../context/AuthContext";
+import { useCategory } from "../hooks/useCategory";
+import { useDocument } from "../hooks/useDocument";
+import { useFirestore } from "../hooks/useFirestore";
 import { useRouter } from "next/router";
 import { ChangeEvent, FormEvent, ReactElement, useEffect, useState } from "react";
 import '@fortawesome/fontawesome-free/css/all.min.css';
@@ -82,7 +82,7 @@ export default function Create(): ReactElement {
             setTitle("");
             setContent("");
             setFile(null);
-            router.push("/");
+            router.push("/blog");
         } else {
             
             alert("Error publishing post. Please try again.");

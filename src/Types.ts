@@ -106,3 +106,8 @@ export interface Post {
     email: string;
   }
   
+
+  export interface Message {
+    type: string;
+    message: string;
+  }
