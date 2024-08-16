@@ -27,7 +27,7 @@ const Aside = (): ReactElement => {
     return (
         <aside className="w-72 p-6 text-sm">
             {isPending ? (
-                <div className="fixed w-7 pr-6">
+                <div className="fixed w-72 pr-6">
                     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md text-center">
                         <div className="relative h-20 bg-gradient-to-r from-yellow-300 to-pink-300 rounded-t-lg flex items-center justify-center">
                             <CustomSkeleton circle={true} width={64} height={64} className="absolute -top-8" />

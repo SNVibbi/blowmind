@@ -8,7 +8,7 @@ interface UseDocumentResult<T> {
     isPending: boolean;
 }
 
-export const useDocument = <T extends DocumentData>(collectionName: string, id: string): UseDocumentResult<T> => {
+export const useDocument = <T extends DocumentData>(collectionName: string | undefined, id: string | undefined): UseDocumentResult<T> => {
     const [document, setDocument] = useState<T | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [isPending, setIsPending] = useState<boolean>(true);
@@ -33,7 +33,6 @@ export const useDocument = <T extends DocumentData>(collectionName: string, id: 
        
         const ref = doc(db, collectionName, id);
 
-        setIsPending(true);
         const unsub = onSnapshot(
             ref,
             (snapshot) => {

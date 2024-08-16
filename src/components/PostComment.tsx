@@ -1,6 +1,6 @@
-import Avatar from "../../components/Avatar";
+import Avatar from "./Avatar";
 import { formatDistanceToNow } from "date-fns"
-import { Comment } from "../../Types";
+import { Comment } from "../Types";
 
 
 interface PostCommentProps {

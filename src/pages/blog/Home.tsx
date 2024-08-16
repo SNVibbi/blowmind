@@ -33,7 +33,8 @@ const Home: React.FC<swProps> = ({ sw }) => {
     if (postPending) return <div className="text-center mt-4">Loading...</div>;
 
     return (
-        <div className="flex flex-col lg:flex-row">
+        <>
+            <div className="flex flex-col lg:flex-row">
             <BlogNavbar screenWidth={sw} mobileMenu={mobileMenu} setMobileMenu={setMobileMenu} />
             <div className={`flex-1 p-4 ${sw > 1050 ? 'lg:flex lg:flex-row lg:space-x-4' : 'flex flex-col space-y-4'}`}>
                 {currentUser && currentUser.interests.length === 0 && <Interest />}
@@ -71,8 +72,9 @@ const Home: React.FC<swProps> = ({ sw }) => {
                     </>
                 )}
             </div>
-            <Footer/>
         </div>
+        <Footer/>
+        </>
     );
 };
 

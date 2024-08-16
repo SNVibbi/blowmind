@@ -9,7 +9,7 @@ export default function Footer() {
   };
 
   return (
-    <footer className="py-4 px-2 md:py-8 md:px-4 bg-gray-800 text-white">
+    <footer className="py-4 px-2 md:py-8 md:px-4 lg:py-10 lg:px-6 bg-gray-800 text-white">
       <div className="max-w-3xl mx-auto md:max-w-6xl grid grid-cols-1 md:grid-cols-4 gap-8">
         <div className="flex items-center gap-4 text-indigo-600">
           <span className="text-xl md:text-2xl font-bold">

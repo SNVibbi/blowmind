@@ -16,7 +16,7 @@ interface ReactionProps {
 
 
 const Reaction: React.FC<ReactionProps> = ({ post }) => {
-    const { updateDocument, response } = useFirestore("post");
+    const { updateDocument, response } = useFirestore("posts");
     const { user } = useAuthContext();
 
     const userLike = post.likes.find((like) => like.uid === user?.uid);

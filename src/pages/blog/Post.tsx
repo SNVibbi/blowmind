@@ -3,8 +3,8 @@ import React from 'react';
 import { useDocument } from '../../hooks/useDocument';
 import { useRouter } from 'next/router';
 import CustomSkeleton from '../../components/CustomSkeleton';
-import PostDetails from '../posts/PostDetails';
-import PostComment from '../posts/PostComment';
+import PostDetails from '../../components/PostDetails';
+import PostComment from '../../components/PostComment';
 import { Post as PostType  } from '../../Types';
 
 const Post: React.FC = () => {

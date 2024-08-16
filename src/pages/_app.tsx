@@ -3,10 +3,6 @@ import "../../styles/globals.css";
 import { AuthContextProvider, useAuthContext } from "../context/AuthContext";
 import { ThemeProvider } from "../context/ThemeContext";
 import React, { useEffect, useState } from "react";
-import useTheme from "../hooks/useTheme";
-import Sidebar from "../components/Sidebar";
-import MainNavbar from "../components/MainNavbar";
-import { useRouter } from "next/router";
 
 function MyApp({ Component, pageProps }: AppProps) {
   const [mobileMenu, setMobileMenu] = useState(false);

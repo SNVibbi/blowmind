@@ -1,9 +1,9 @@
-import Avatar from '../../components/Avatar';
-import BookmarkIcon from '../../components/BookmarkIcon';
-import ContentInput from '../../components/ContentInput';
-import Reaction from '../../components/Reaction';
+import Avatar from '../components/Avatar';
+import BookmarkIcon from '../components/BookmarkIcon';
+import ContentInput from '../components/ContentInput';
+import Reaction from '../components/Reaction';
 import { useAuthContext } from '@/context/AuthContext';
-import { Post } from '../../Types';
+import { Post } from '../Types';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import Image from 'next/image';
 import React from 'react';
@@ -56,7 +56,7 @@ const PostDetails: React.FC<PostDetailsProps> = ({ post }) => {
             </div>
             <Reaction post={post} />
             <div className="flex items-center mt-4">
-                <Avatar src={user?.photoURL || ""} />
+                <Avatar className='w-20 h-20' src={user?.photoURL || ""} />
                 <ContentInput post={post} />
             </div>
         </div>
