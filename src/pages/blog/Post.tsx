@@ -12,6 +12,10 @@ const Post: React.FC = () => {
     const { id } = router.query as { id: string };
     const { error, document, isPending } = useDocument<PostType>("posts", id);
 
+    if (!id) {
+        return <div>Invalid post ID.</div>
+    }
+
     if (error) {
         return <div className='text-red-600'>{error}</div>;
     }
@@ -33,7 +37,10 @@ const Post: React.FC = () => {
 
     return (
         <>
-            <button className="flex items-center gap-2 text-blue-600 hover:text-blue-800 dark:text-white dark:hover:text-gray-300 mb-4" onClick={() => router.back()}>
+            <button 
+                className="flex items-center gap-2 text-blue-600 hover:text-blue-800 dark:text-white dark:hover:text-gray-300 mb-4" 
+                onClick={() => router.back()}
+            >
                 <i className="fas fa-arrow-left"></i>
                 <span>Posts</span>
             </button>

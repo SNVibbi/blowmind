@@ -7,8 +7,10 @@ import React, { useState } from "react";
 import Avatar from "../components/Avatar";
 import BookmarkIcon from "../components/BookmarkIcon";
 import Options from "../components/Options";
+import DefaultAvatar from "../../public/img/default-avatar.jpg"
 import Image from "next/image";
 import Reaction from "../components/Reaction";
+import { toast } from "react-toastify";
 
 
 interface PostListProps {
@@ -25,18 +27,28 @@ const PostList: React.FC<PostListProps> = ({ posts, msg }) => {
     const [options, setOptions] = useState<{ [key: number]: boolean}>({});
 
     const handleClick = async (post: Post) => {
-        await updateDocument (post.id, {
-            expands: (post.expands += 1),
-        });
+        try {
+            await updateDocument (post.id, {
+                expands: (post.expands += 1),
+            });
+        } catch (error) {
+            console.error("Error updating post:", error);
+            toast.error("Error Updating post")
+        }
     };
 
     const handleMouseEnter = async (post: Post) => {
+       try {
         const viewed = post.views.filter((view: any) => view.uid === user?.uid); 
         const views = { uid: user?.uid!, id: new Date().toISOString() };
         
         if (!viewed.length) {
             await updateDocument(post.id, { views: [...post.views, views] });
         } 
+       } catch (error) {
+        console.error("Error updating views:", error);
+        toast.error("Error updating views")
+       }
 
     };
 
@@ -49,7 +61,9 @@ const PostList: React.FC<PostListProps> = ({ posts, msg }) => {
 
     return (
         <div className="space-y-4">
-            {posts?.length === 0 && <p className="text-center text-gray-500">{msg}</p>}
+            {posts?.length === 0 && (
+                <p className="text-center text-gray-500">{msg}</p>
+            )}
             {posts?.map((post, index) => (
                 <div 
                     className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300" 
@@ -57,14 +71,14 @@ const PostList: React.FC<PostListProps> = ({ posts, msg }) => {
                     onMouseEnter={() => handleMouseEnter(post)}
                 >
                     <div className="flex items-center space-x-4">
-                        <Avatar src={post.author.photoURL} />
-                        <div>
-                            <span className="font-semi-bold">
+                        <Avatar src={post.author.photoURL || DefaultAvatar} className="w-16 h-16 md:w-22 md:h-22" />
+                        <div className="flex-1">
+                            <span className="font-semi-bold text-gray-900 dark:text-gray-100">
                                 {post.author.firstName} {post.author.lastName}
                             </span>
-                            <div className="text-sm text-gray-500">
+                            <div className="text-sm text-gray-500 dark:text-gray-400">
                                 <span>{post.createdAt.toDate().toDateString().slice(3)}</span>
-                                <span>.</span>
+                                <span className="mx-1">.</span>
                                 <span>{post.author.headline}</span>
                             </div>
                         </div>
@@ -82,7 +96,7 @@ const PostList: React.FC<PostListProps> = ({ posts, msg }) => {
                         </div>
                     </div>
                     <div onClick={() => handleClick(post)}>
-                        <Link href={`/post/${post.id}`}>
+                        <Link href={`#/post/${post.id}`}>
                             <h2 className="mt-2 text-xl font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
                                 {post.title}
                             </h2>
@@ -97,8 +111,12 @@ const PostList: React.FC<PostListProps> = ({ posts, msg }) => {
                             {post.imageURL && (
                                 <Image 
                                     src={post.imageURL} 
-                                    alt="" 
-                                    className="mt-2 rounded-lg w-full object-cover" 
+                                    alt="Post Content" 
+                                    className="mt-2 rounded-lg w-full object-cover"
+                                    width={800}
+                                    height={400}
+                                    layout="responsive"
+                                    priority 
                                 />
                             )}
                         </Link>

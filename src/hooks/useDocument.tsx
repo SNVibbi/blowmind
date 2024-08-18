@@ -1,6 +1,7 @@
 import { db } from "../utils/firebaseConfig";
 import { doc, DocumentData, onSnapshot } from "firebase/firestore";
 import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 
 interface UseDocumentResult<T> {
     document: T | null;
@@ -14,7 +15,7 @@ export const useDocument = <T extends DocumentData>(collectionName: string | und
     const [isPending, setIsPending] = useState<boolean>(true);
 
     useEffect(() => {
-        // Validate Firestore instance
+        // Validating Firestore instance
         if (!db) {
             console.error("Firestore instance is not initialized.");
             setError("Firestore is not initialized.");
@@ -22,18 +23,17 @@ export const useDocument = <T extends DocumentData>(collectionName: string | und
             return;
         }
 
-        // Validate collectionName and id
+        // Validating collectionName and id
         if (!collectionName || typeof collectionName !== 'string' || !id || typeof id !== 'string') {
             console.error("Invalid collectionName or id provided:", { collectionName, id });
             setError("Invalid collection or document ID.");
-            setIsPending(false);
             return;
         }
 
+        setIsPending(true);
+
        
         const ref = doc(db, collectionName, id);
-
-        setIsPending(true)
         const unsub = onSnapshot(
             ref,
             (snapshot) => {
@@ -47,7 +47,7 @@ export const useDocument = <T extends DocumentData>(collectionName: string | und
                 setIsPending(false);
             },
             (err) => {
-                console.error("Error fetching document:", err.message);
+                toast.error(`Error fetching document: ${err.message}`);
                 if (err.code === 'permission-denied') {
                     setError("You do not have permission to access this document.")
                 } else {

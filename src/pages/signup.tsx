@@ -86,8 +86,9 @@ const Signup: React.FC = () => {
                         <Image 
                             src={BG} 
                             alt="intro" 
-                            layout="fill" 
-                            objectFit="cover" className="rounded-lg h-full" />
+                            fill
+                            style={{ objectFit: "cover" }} 
+                            className="rounded-lg h-full" />
                     </div>
 
                     <div className="p-6 flex flex-col justify-between">

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { auth, db } from "../utils/firebaseConfig";
 import { useAuthContext } from "../context/AuthContext";
 import { doc, updateDoc } from "firebase/firestore";
+import { toast } from "react-toastify";
 
 
 interface UseLogout {
@@ -22,20 +23,18 @@ const useLogout = (): UseLogout => {
 
     try {
       if (user) {
-          // Ensure the user document exists and update online status
+          // Ensuring the user document exists and update online status
         const userDocRef = doc(db, "users", user.uid) 
         await updateDoc(userDocRef, { online: false });
 
-        // Sign the user out
+        // Signing the user out
         await auth.signOut();
 
-        // Dispatch logout action
-        dispatch({
-            type: "LOGOUT",
-            payload: null
-        });
+        // Dispatching logout action
+        dispatch({ type: "LOGOUT" });
+        toast.success("Logout successful!")
 
-        // Update state
+        // Updating state
         if (!isCancelled) {
           setIsPending(false);
           setError(null);
@@ -45,7 +44,7 @@ const useLogout = (): UseLogout => {
       }
     } catch (err: any) {
       if (!isCancelled) {
-        setError(err.message);
+        setError(err.message || "An unknown error occurred");
         setIsPending(false);
       }
     }

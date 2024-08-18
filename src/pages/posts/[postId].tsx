@@ -6,17 +6,12 @@ import PostComment from '../../components/PostComment';
 import Reaction from '../../components/Reaction'; 
 import { useState, useEffect } from 'react';
 import { Post } from '../../Types';
+import { toast } from 'react-toastify';
 
 
 const PostPage:  React.FC  = () => {
   const router = useRouter();
   const { postId } = router.query;
-
-  useEffect(() => {
-    console.log('Post ID:', postId)
-  }, [postId])
-
-  const { document: post, error, isPending } = useDocument<Post>('posts', postId as string);
 
   const [screenWidth, setScreenWidth] = useState<number>(0);
   const [mobileMenu, setMobileMenu] = useState<boolean>(false);
@@ -26,6 +21,17 @@ const PostPage:  React.FC  = () => {
       setScreenWidth(window.innerWidth);
     }
   }, []);
+
+  useEffect(() => {
+    if (!postId) {
+      toast.error("Post ID is missing")
+    }
+    toast.success(`Post ID: ${postId}`)
+  }, [postId]);
+
+  const { document: post, error, isPending } = useDocument<Post>('posts', postId as string);
+
+  if (!postId) return <p className='text-gray-500'>Invalid post ID.</p>
 
   if (isPending) return <p>Loading post...</p>;
   if (error) return <p className="text-red-500">Error: {error}</p>;

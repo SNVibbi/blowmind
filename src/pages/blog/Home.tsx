@@ -1,6 +1,6 @@
 import BlogNavbar from "@/components/BlogNavbar";
 import Aside from "../../components/Aside";
-import Interest from "../../components/Interest";
+import Interest from "../interest";
 import PostList from "../../components/PostList";
 import { useAuthContext } from "../../context/AuthContext";
 import { useCollection } from "../../hooks/useCollection";

@@ -3,6 +3,7 @@ import { db, storage, Timestamp } from "../utils/firebaseConfig";
 import { collection, doc, addDoc, deleteDoc, updateDoc } from "firebase/firestore";
 import { useEffect, useReducer, useState } from "react";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
+import { toast } from "react-toastify";
 
 
 
@@ -66,18 +67,25 @@ export const useFirestore = (collectionName: string) => {
             let downloadURL = "";
 
             if (image) {
-                const uploadPath = `images/${image.name}`;
-                const imageRef = ref(storage,uploadPath);
-                await uploadBytes(imageRef, image)
-                downloadURL = await getDownloadURL(imageRef);
+                try {
+                    const uploadPath = `images/${image.name}`;
+                    const imageRef = ref(storage,uploadPath);
+                    await uploadBytes(imageRef, image)
+                    downloadURL = await getDownloadURL(imageRef);
+                } catch (uploadError: any) {
+                    console.error("Image upload error", uploadError)
+                    throw new Error("Failed to upload the image. Please try again")
+                }
             }
 
             const addedDocument = await addDoc(colRef, { ...doc, createdAt, imageURL: downloadURL,  userId: user?.uid, });
             dispatchIfNotCancelled({ type: "ADDED_DOCUMENT", payload: addedDocument });
+            toast.success("Document added successfully!")
 
             return addedDocument.id;
         } catch (err:any) {
             dispatchIfNotCancelled({ type:"ERROR", payload: err.message });
+            toast.error(`Error adding document: ${err.message}`);
         }
     };
 
@@ -87,8 +95,10 @@ export const useFirestore = (collectionName: string) => {
             const docRef = doc(db, collectionName, id);
             await deleteDoc(docRef);
             dispatchIfNotCancelled({ type: "DELETED_DOCUMENT" });
+            toast.success("Document deleted successfully!");
         } catch (err: any) {
             dispatchIfNotCancelled({ type: "ERROR", payload: "Could not delete" });
+            toast.error(`Error deleting document: ${err.message}`);
         }
     };
 
@@ -98,9 +108,11 @@ export const useFirestore = (collectionName: string) => {
             const docRef = doc(db, collectionName, id);
             await updateDoc(docRef,updates);
             dispatchIfNotCancelled({ type: "UPDATED_DOCUMENT", payload: updates });
+            toast.success("Document updated successfully!")
             return updates;
         } catch (err: any) {
             dispatchIfNotCancelled({ type: "ERROR", payload: err.message });
+            toast.error(`Error updating document: ${err.message}`);
             return null;
         }
     };

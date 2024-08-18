@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { auth, db } from "../utils/firebaseConfig";
 import { doc, setDoc, updateDoc } from "firebase/firestore";
 import "firebase/compat/auth"
+import { toast } from "react-toastify";
 
 
 
@@ -31,7 +32,7 @@ const useGoogle = () => {
                 const firstName: string = splitName[0];
                 const lastName: string = splitName[1];
 
-                // create a user document
+                // creating a user document
                 await setDoc(doc(db, "users", res.user.uid), {
                     photoUrl: res.user.photoURL,
                     email: res.user.email,
@@ -47,13 +48,14 @@ const useGoogle = () => {
                 if(!isCancelled) {
                     setIsPending(false);
                     setError(null);
+                    toast.success("Signup successful!")
                 }
             }
         } catch (err: any) {
             if (!isCancelled) {
-                console.log(err.message)
                 setError(err.message)
                 setIsPending(false);
+                toast.error(`Signup failed: ${err.message}`)
             }
         }
     };
@@ -80,12 +82,13 @@ const useGoogle = () => {
             if (!isCancelled) {
                 setIsPending(false);
                 setError(null);
+                toast.success("Sign-in successful!")
             }
         }catch (err: any) {
             if (!isCancelled) {
-                console.log(err.message);
                 setError(err.message);
                 setIsPending(false);
+                toast.error(`Sign-in failed: ${err.message}`);
             }
         }
     };

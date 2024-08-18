@@ -4,7 +4,8 @@ import { auth, db } from "../utils/firebaseConfig";
 import { useEffect, useState } from "react"
 import { doc, DocumentSnapshot, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { Message } from "../Types";
-import router, { useRouter } from "next/router";
+import { useRouter } from "next/router";
+import { toast } from "react-toastify";
 interface UseLogin {
     login: (email: string, password: string) => Promise<void>;
     message: Message | null | undefined;
@@ -17,6 +18,7 @@ const useLogin = (): UseLogin => {
     const [message, setMessage] = useState<Message | null | undefined>(null);
     const [isPending, setIsPending] = useState(false);
     const { dispatch } = useAuthContext();
+    const router = useRouter();
 
 
     const login = async (email: string, password: string): Promise<void> => {
@@ -27,24 +29,22 @@ const useLogin = (): UseLogin => {
         try {
             //login
             const response = await signInWithEmailAndPassword(auth, email, password).catch((error) => {
-                console.log("Error Logging in..");
-                console.log(error);
+                console.log("Error Logging in..", error);
                 setIsPending(false);
-
                 throw error;
-            });
-            console.log(response);
+            })
+                
             const user: FirebaseUser = response.user;
 
             if (!user) {
                 throw new Error("Failed to login")
             }
 
-            // update online status
+            // Checking if the user has selected their interests
             const documentRef = doc(db, "users", user.uid);
             const userDoc: DocumentSnapshot = await getDoc(documentRef);
-
             if (!userDoc.exists()) {
+                // If the user's document doesn't exist, create it
                 const [firstName, ...lastNameArr] = user.displayName?.split(" ") || [" "];
                 const lastName = lastNameArr.join(" "); 
 
@@ -57,7 +57,19 @@ const useLogin = (): UseLogin => {
                     interest: [],
                     headline:"",
                 });
+                // Redirecting to interest selection since it's a new user
+                router.push("/interest");
             } else {
+                // If the user document exists, check if interests are selected
+                const userData = userDoc.data();
+                if (userData && userData.interests && userData.interests.length > 0) {
+                    // User has selected interests, redirecting to main content
+                    router.push("/blog");
+                } else {
+                    // User hasn't selected interests, redirecting to the interest selection
+                    router.push("/interest");
+                }
+                // Updating online status
                 await updateDoc(documentRef, { online: true});
             }
 
@@ -65,20 +77,19 @@ const useLogin = (): UseLogin => {
             
 
             dispatch({ type: "LOGIN", payload: user });
+            toast.success("Login successful!");
 
             setIsPending(false);
             setMessage({ type: "Success", message: "Login Successful" });
-            router.push("/blog");
           } catch (error: any) {
             if (!isCancelled) {
-                if (error) {
-                    let errorMessage: string = "";
+                toast.error("Login error:", error)
+                    let errorMessage: string = "An error occurred during login.";
                     if (error.code === "auth/invalid-credential") {
                         errorMessage = "Invalid email/password, please try again";
                     }
                     setMessage({ type: "Error", message: errorMessage });
                     setIsPending(false)
-                }
             }
           }
     };

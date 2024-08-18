@@ -4,6 +4,7 @@ import useTheme from "../hooks/useTheme";
 import { useState } from "react";
 import Image from "next/image";
 import '@fortawesome/fontawesome-free/css/all.min.css';
+import { useRouter } from "next/router";
 
 interface Interest {
     src: string;
@@ -19,6 +20,7 @@ const interests: Interest[] = [
 ];
 
 const InterestComponent: React.FC = () => {
+    const router = useRouter();
     const { color }: any = useTheme();
     const { user }: any = useAuthContext();
     const { updateDocument, response } = useFirestore("users");
@@ -43,6 +45,8 @@ const InterestComponent: React.FC = () => {
         await updateDocument(user.uid, {
             interests: selectedInterests,
         });
+
+        router.push("/blog")
     };
 
     return (

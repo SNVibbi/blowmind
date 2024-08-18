@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import Confirm from "./Confirm";
 import "@fortawesome/fontawesome-free/css/all.min.css";
+import { Post } from "@/Types";
 
 
 interface OptionProps {
-    post: any;
+    post: Post;
 }
 
 const Options: React.FC<OptionProps> = ({ post }) => {
@@ -16,6 +17,7 @@ const Options: React.FC<OptionProps> = ({ post }) => {
             <button 
                 className="bg-none border-none text-gray-600 dark:text-red-600 hover:text-red-500"
                 onClick={() => setIsConfirm(true)}
+                aria-label={`Delete post ${post.id}`}
             >
                <i className="fas fa-times-circle"></i>
             </button>

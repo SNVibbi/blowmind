@@ -6,10 +6,11 @@ import { useRouter } from "next/router";
 import { ChangeEvent, FormEvent, ReactElement, useEffect, useState } from "react";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import Image from "next/image";
+import { toast } from "react-toastify";
 
 export default function Create(): ReactElement {
     const { user } = useAuthContext();
-    const { document: CurrentUser } = useDocument("users", user?.uid || "defaultUserId"); 
+    const { document: CurrentUser, error: userError } = useDocument("users", user?.uid || "defaultUserId"); 
     const router = useRouter();
     const { addDocument, response } = useFirestore("posts");
     const [add, setAdd] = useState(false);
@@ -23,10 +24,15 @@ export default function Create(): ReactElement {
     const [isVideoEnable, setIsVideoEnable] = useState(false);
 
     useEffect(() => {
+        if (userError) {
+            console.error("Error fetching user data:", userError);
+            toast.error("Error fetching user data. Please try again.")
+        }
+
         if (file) {
             setFileUrl(URL.createObjectURL(file));
         }
-    }, [file]);
+    }, [file, userError]);
 
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>): void => {
         setFile(null);
@@ -77,14 +83,17 @@ export default function Create(): ReactElement {
             tags: newTags,
         };
 
+        console.log("Submitting post:", post)
+
         await addDocument(post, file || undefined);
+
         if (!response.error) {
             setTitle("");
             setContent("");
             setFile(null);
             router.push("/blog");
         } else {
-            
+            toast.error(`Error publishing post ${response.error}`)
             alert("Error publishing post. Please try again.");
         }
     };
@@ -114,7 +123,7 @@ export default function Create(): ReactElement {
                         placeholder="Title"
                         className="w-full text-4xl bg-transparent border-none outline-none text-gray-800 dark:text-gray-200"
                         onChange={(e) => setTitle(e.target.value)}
-                        value={title}
+                        value={title || ""}
                     />
                     {fileUrl && 
                         (<Image 
@@ -129,7 +138,7 @@ export default function Create(): ReactElement {
                         name="content"
                         required
                         placeholder="Write a post..."
-                        className="w-full h-96 bg-transparent border-none outline-none text-gray-800 dark:text-gray-200"
+                        className="w-full h-96 bg-transparent border-none cursor-pointer outline-none text-gray-800 dark:text-gray-200"
                         onChange={(e) => setContent(e.target.value)}
                         value={content}
                     ></textarea>

@@ -1,6 +1,7 @@
 import Avatar from '../components/Avatar';
 import BookmarkIcon from '../components/BookmarkIcon';
 import ContentInput from '../components/ContentInput';
+import DefaultAvatar from "../../public/img/default-avatar.jpg"
 import Reaction from '../components/Reaction';
 import { useAuthContext } from '@/context/AuthContext';
 import { Post } from '../Types';
@@ -18,13 +19,13 @@ const PostDetails: React.FC<PostDetailsProps> = ({ post }) => {
 
     
     return (
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
-            <div className="flex items-center justify-between">
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md max-w-4xl mx-auto">
+            <div className="flex flex-col md:flex-row md:items-center justify-between">
                 <div className="flex items-center space-x-4">
-                    <Avatar src={post.author.photoURL} className='w-22 h-22' />
+                    <Avatar src={post.author.photoURL} className='w-16 h-16 md:w-22 md:h-22' />
                 </div>
                 <div>
-                    <h2 className="text-lg font-semibold">
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                         {post.author.firstName} {post.author.lastName}
                     </h2>
                     <span className="text-gray-500 dark:text-gray-400 text-sm">
@@ -32,9 +33,12 @@ const PostDetails: React.FC<PostDetailsProps> = ({ post }) => {
                     </span>
                 </div>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-4 mt-4 md:mt-0">
                 <BookmarkIcon post={post} />
-                <button className="text-gray-500 dark:text-gray-400">
+                <button 
+                    className="text-gray-500 dark:text-gray-400"
+                    aria-label="More options"
+                >
                     <i className="fa fa-ellipsis-v"></i>
                 </button>
             </div>
@@ -51,12 +55,14 @@ const PostDetails: React.FC<PostDetailsProps> = ({ post }) => {
                             alt='Post content' 
                             width={800}
                             height={600}
+                            layout="responsive"
                         />
                     )}
             </div>
             <Reaction post={post} />
-            <div className="flex items-center mt-4">
-                <Avatar className='w-20 h-20' src={user?.photoURL || ""} />
+
+            <div className="flex flex-col md'flex-row items-center mt-4 space-y-4 md:space-y-0 md:space-x-4">
+                <Avatar className='w-12 h-12 md:w-16 md:h-16' src={user?.photoURL || DefaultAvatar} />
                 <ContentInput post={post} />
             </div>
         </div>

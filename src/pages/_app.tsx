@@ -3,6 +3,7 @@ import "../../styles/globals.css";
 import { AuthContextProvider, useAuthContext } from "../context/AuthContext";
 import { ThemeProvider } from "../context/ThemeContext";
 import React, { useEffect, useState } from "react";
+import ToastConfig from "@/components/ToastConfig";
 
 function MyApp({ Component, pageProps }: AppProps) {
   const [mobileMenu, setMobileMenu] = useState(false);
@@ -25,6 +26,7 @@ function MyApp({ Component, pageProps }: AppProps) {
   return (
     <AuthContextProvider>
       <ThemeProvider>
+        <ToastConfig />
         <Component {...pageProps} screenWidth={screenWidth} mobileMenu={mobileMenu} setIsMenuOpen={setMobileMenu} />
       </ThemeProvider>
     </AuthContextProvider>

@@ -18,7 +18,7 @@ const Login: React.FC = () => {
     const { login, isPending, message } = useLogin();
     const { googleSignIn, error: signinError, isPending: signinPending } = useGoogle();
 
-    const handleInputType = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const togglePasswordVisibility = (e: React.MouseEvent<HTMLButtonElement>) => {
         setTextType(!textType);
     };
 
@@ -32,14 +32,15 @@ const Login: React.FC = () => {
             <MainNavbar />
             <div className="min-h-screen flex flex-col items-center justify-center bg-gray-200 dark:bg-gray-900 py-4">
                 <form 
-                    onSubmit={handleSubmit} className="bg-gray-200 dark:bg-gray-800 shadow-lg rounded-lg p-4 grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 w-full max-w-4xl"
+                    onSubmit={handleSubmit} 
+                    className="bg-gray-200 dark:bg-gray-800 shadow-lg rounded-lg p-4 grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 w-full max-w-4xl"
                 >
                     <div className="relative w-full h-64 md:h-auto">
                         <Image
                             src={BG}
                             alt="intro"
-                            layout="fill"
-                            objectFit="cover"
+                            fill
+                            style={{ objectFit: "cover" }}
                             className="rounded-lg"
                             priority
                         />
@@ -82,7 +83,7 @@ const Login: React.FC = () => {
 
                             <div className="flex items-center border-2 border-gray-300 dark:border-gray-700 rounded-lg mb-4 p-2">
                                 <label htmlFor="email" className="text-gray-600 dark:text-gray-400 mr-2">
-                                    <i className="fa fa-envelope"></i>
+                                    <i className="fas fa-envelope"></i>
                                 </label>
                                 <input 
                                     id="email"
@@ -110,7 +111,8 @@ const Login: React.FC = () => {
                                 />
                                 <button 
                                     type="button" 
-                                    onClick={handleInputType} className="text-gray-600 dark:text-gray-400 ml-2"
+                                    onClick={togglePasswordVisibility} 
+                                    className="text-gray-600 dark:text-gray-400 ml-2"
                                 >
                                     <i 
                                         className={textType ? "fas fa-eye-slash" : "fas fa-eye"}></i>

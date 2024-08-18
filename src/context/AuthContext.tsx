@@ -10,10 +10,16 @@ interface AuthState {
     error: any | null;
 }
 
-interface AuthAction {
-    type: "LOGIN" | "LOGOUT" | "AUTH_IS_READY";
-    payload: FirebaseUser | null;
+interface LoginAction {
+    type: "LOGIN" | "AUTH_IS_READY";
+    payload: FirebaseUser | null
 }
+
+interface LogoutAction {
+    type: "LOGOUT"
+}
+
+type AuthAction = LoginAction | LogoutAction;
 
 interface AuthContextValue extends AuthState {
     dispatch: Dispatch<AuthAction>;
@@ -28,11 +34,10 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 const authReducer = (state: AuthState, action: AuthAction): AuthState => {
     switch (action.type) {
         case "LOGIN":
-            return { ...state, user: action.payload };
-        case "LOGOUT":
-            return { ...state, user: null };
         case "AUTH_IS_READY":
-            return { ...state, user: action.payload, authIsReady: true };
+            return { ...state, user: action.payload, authIsReady: true, loading: false };
+        case "LOGOUT":
+            return { ...state, user: null, loading:false };
         default:
             return state;
     }

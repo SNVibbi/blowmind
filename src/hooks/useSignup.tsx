@@ -5,7 +5,8 @@ import { createUserWithEmailAndPassword, updateProfile, User as FirebaseUser } f
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useEffect, useState } from "react"
 import { Message } from "../Types";
-import { Router, useRouter } from "next/router";
+import { useRouter } from "next/router";
+import { toast } from "react-toastify";
 
 
 interface UseSignup {
@@ -43,10 +44,9 @@ const useSignup = (): UseSignup => {
         setIsPending(true);
 
         try {
-            //signup
+            //signup users
             const res = await createUserWithEmailAndPassword(auth,email, password).catch((error) => {
-                console.log("Error Signing Up");
-                console.log("Error:::::: ", error);
+                console.log("Error Signing Up",error);
                 setIsPending(false);
                 throw error;
             });
@@ -57,20 +57,19 @@ const useSignup = (): UseSignup => {
                 throw new Error("Could not complete signup");
             }
 
-            // upload user thumbnail
+            // uploading user thumbnail
             const uploadPath = `thumbnails/${user.uid}/${thumbnail.name}`;
             const storageRef = ref(storage, uploadPath);
             await uploadBytes(storageRef, thumbnail);
             const downloadURL = await getDownloadURL(storageRef);
 
             const [profileUpdated, documentSet] = await Promise.allSettled([
-                // add display and photo_url name to user
-                await updateProfile(user,{
+                updateProfile(user,{
                     displayName: `${firstName} ${lastName}`,
                     photoURL: downloadURL,
                 }),
-                // create a user document
-                await setDoc(doc(db, "users", user.uid), {
+                // creating a user document
+                setDoc(doc(db, "users", user.uid), {
                     online: true,
                     firstName,
                     photoUrl: downloadURL,
@@ -82,16 +81,24 @@ const useSignup = (): UseSignup => {
                 }),
             ]);
 
+            if (profileUpdated.status === "rejected"){
+                toast.error("Profile update failed:", profileUpdated.reason);
+            }
+
+            if (documentSet.status === "rejected") {
+                toast.error("Document creation failed:", documentSet.reason);
+            }
 
 
             dispatch({ type: "LOGIN", payload: user });
+            toast.success("Signup successful!");
 
            setIsPending(false);
            setMessage({ type: "Success", message: "Sign up successful" });
-           router.push("/blog");
+           router.push("/interest");
         }  catch (error: any) {
-           if (error) {
-            console.log(error);
+           if (!isCancelled) {
+            toast.error("Signup error:",error);
             let errorMessage: string = "";
             if (error.code === "auth/email-already-in-use") {
                 errorMessage = "Email Already Exists please register with a different email";
