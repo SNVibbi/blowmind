@@ -16,23 +16,25 @@ export default function Footer() {
             <Image src={Logo} alt="Logo" className="text-2xl" width={150} height={100} />
           </span>
         </div>
-        <ul>
-          <h5 className="text-xl font-bold mb-4">Explore</h5>
-          <li className="mb-2">Community</li>
-          <li className="mb-2">Trending blogs</li>
-          <li className="mb-2">Blowmind for teams</li>
-        </ul>
-        <ul>
-          <h5 className="text-xl font-bold mb-4">Support</h5>
-          <li className="mb-2">Support docs</li>
-          <li className="mb-2">Join Slack</li>
-          <li className="mb-2">Contact</li>
-        </ul>
-        <ul>
-          <h5 className="text-xl font-bold mb-4">Official blog</h5>
-          <li className="mb-2">Community blog</li>
-          <li className="mb-2">Engineering blog</li>
-        </ul>
+        <div className="flex space-x-6 justify-evenly md:space-x-20 lg:space-x-32">
+              <ul>
+                <h5 className="text-xl font-bold mb-4">Explore</h5>
+                <li className="mb-2">Community</li>
+                <li className="mb-2">Trending blogs</li>
+                <li className="mb-2">Blowmind for teams</li>
+              </ul>
+              <ul>
+                <h5 className="text-xl font-bold mb-4">Support</h5>
+                <li className="mb-2">Support docs</li>
+                <li className="mb-2">Join Slack</li>
+                <li className="mb-2">Contact</li>
+              </ul>
+              <ul>
+                <h5 className="text-xl font-bold mb-4">Official blog</h5>
+                <li className="mb-2">Community blog</li>
+                <li className="mb-2">Engineering blog</li>
+              </ul>
+        </div>
       </div>
       <div className="mt-8 text-center text-gray-400">
         <p>&copy; 2024 by KontriDev. All rights reserved.</p>

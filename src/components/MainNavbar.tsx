@@ -21,7 +21,7 @@ const MainNavbar: React.FC = () => {
   };
 
   return (
-    <nav className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 shadow-md">
+    <nav className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 shadow-md">
       <div className="flex items-center text-indigo-600 dark:text-white">
         <span className="text-lg md:ml-2 md:text-2xl font-bold">
           <Image src={Logo} alt="Blow-mind Logo" className="text-2xl" width={110} height={100} />

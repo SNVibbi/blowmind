@@ -78,7 +78,7 @@ const Signup: React.FC = () => {
     return (
         <>
             <MainNavbar />
-            <div className="min-h-screen flex flex-col items-center justify-center bg-gray-200 dark:bg-gray-900 py-4">
+            <div className="min-h-screen flex flex-col items-center justify-center bg-gray-200 dark:bg-gray-900 py-1">
                 <form 
                     onSubmit={handleSubmit} className="bg-gray-200 dark:bg-gray-800 shadow-lg rounded-lg p-4 grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 w-full max-w-4xl"
                 >

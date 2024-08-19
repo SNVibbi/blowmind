@@ -50,28 +50,39 @@ const InterestComponent: React.FC = () => {
     };
 
     return (
-        <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 overflow-hidden">
-            <div className="m-6 mb-8">
-                {response.error && <div className="text-red-500">An error occurred</div>}
-                <h2 className="text-xl font-bold mb-4">Interests</h2>
-                <p className="text-base mb-6">
+        <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 overflow-hidden md:flex md:justify-center md:items-center">
+            <div className="m-2 md:m-4 lg:m-6 mb-4 max-w-3xl w-full">
+                {response.error && <div className="text-red-500 text-center mb-4">An error occurred</div>}
+                <h2 className="text-xl mt-6 md:text-2xl lg:text-3xl font-bold mb-4 text-center">Select Your Interests</h2>
+                <p className="text-base m-4 md:text-lg lg:text-xl text-center mb-6">
                     Posts are personalized based on your interests and search history. Learn how this works.
                 </p>
-                <ul className="flex flex-wrap gap-4 justify-center">
+                <ul className="flex flex-wrap gap-8 md:gap-16 lg:gap-10">
                     {interests.map((int, index) => (
                         <li
                             key={int.value}
                             onClick={() => handleClick(int.value, index)}
-                            className={`flex items-center p-4 rounded-lg cursor-pointer border-2 ${isClicked[index] ? 'border-blue-500' : 'border-transparent'} bg-gray-200 dark:bg-gray-800 transition-all duration-300`}
+                            className={`flex items-center p-4 rounded-lg cursor-pointer border-2 ${isClicked[index] ? 'border-blue-500' : 'border-transparent'} bg-gray-200 dark:bg-gray-800 transition-all duration-300 w-28 md:w-40 lg:w-40`}
                         >
-                            <Image src={int.src} alt={int.value} width={100} height={100} className="w-20 h-20 object-cover rounded" />
-                            <p className="ml-4 text-base text-gray-800 dark:text-gray-200">{int.value}</p>
-                            {isClicked[index] && <i className="ml-auto fas fa-check-circle text-blue-500"></i>}
+                            <Image 
+                                src={int.src} 
+                                alt={int.value} 
+                                width={100} 
+                                height={100} 
+                                className="w-full h-24 md:h-34 lg:h-40 object-cover rounded" 
+                            />
+                            <p className="mt-2 text-sm md:text-base text-gray-800 dark:text-gray-200 text-center">
+                                {int.value}
+                            </p>
+                            {isClicked[index] && <i className="fas fa-check-circle text-blue-500 "></i>}
                         </li>
                     ))}
                 </ul>
                 <div className="text-center mt-6">
-                    <button className={`px-6 py-2 rounded bg-[${color}] text-indigo-400`} onClick={handleSubmit}>
+                    <button 
+                        className={`px-6 py-2 rounded bg-[${color}] text-indigo-400 hover:bg-blue-600 transition duration-300`} 
+                        onClick={handleSubmit}
+                    >
                         Confirm Interests
                     </button>
                 </div>

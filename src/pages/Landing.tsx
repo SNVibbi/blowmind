@@ -135,10 +135,19 @@ export default function Landing() {
 
       <section className="flex items-center justify-center mb-3 text-center bg-gray-800 text-white py-6">
         <div>
-          <Image src={HeroImage} alt="Welcome message" className="mx-auto opacity-70" />
+          <Image 
+            src={HeroImage} 
+            alt="Welcome message" 
+            className="mx-auto opacity-70" />
           <h1 className="text-xl md:text-4xl font-bold mt-4">Welcome to Blowmind: A Haven for Text-Based Content</h1>
-          <p className="text-lg md:text-xl mt-2">Unleash the Power of Words, Connect with Like-minded Readers and Writers</p>
-          <button className="mt-4 px-3 py-1 md:y-2 md:px-6 bg-indigo-600 text-white rounded hover:bg-indigo-700">Get started</button>
+          {/* <p className="text-lg md:text-xl mt-2">Unleash the Power of Words, Connect with Like-minded Readers and Writers</p> */}
+          <Link href="/blog" >
+            <button 
+              className="mt-4 px-3 py-1 md:y-2 md:px-6 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+            >
+                Get started
+            </button>
+          </Link>
         </div>
       </section>
 
@@ -147,7 +156,8 @@ export default function Landing() {
           <div>
             <h2 className="text-3xl font-bold mb-4">About Blowmind</h2>
             <p>
-              Blowmind is a multi-functional platform where authors and readers can have access to their own content. It aims to be a traditional bookworm’s heaven and a blog to get access to more text-based content. Our vision is to foster an inclusive and vibrant community where diversity is celebrated. We encourage open-mindedness and respect for all individuals, regardless of their backgrounds or beliefs. By promoting dialogue and understanding, we strive to create a welcoming space for everyone where each and everyone can pour out there feelings in the form of writing.
+              Blowmind is a multi-functional platform where authors and readers can have access to their own content. It aims to be a traditional bookworm’s heaven and a blog to get access to more text-based content. Our vision is to foster an inclusive and vibrant community where diversity is celebrated. <br />
+              We encourage open-mindedness and respect for all individuals, regardless of their backgrounds or beliefs. By promoting dialogue and understanding, we strive to create a welcoming space for everyone where each and everyone can pour out there feelings in the form of writing.
             </p>
           </div>
           <div>
@@ -179,7 +189,7 @@ export default function Landing() {
             <p className="text-lg md:text-xl mb-4">Blowmind has become an integral part of my online experience. As a user of this incredible blogging platform, I have discovered a vibrant community of individuals who are passionate about sharing their ideas and engaging in thoughtful discussions.
             </p>
             <h4 className="text-xl md:text-2xl font-bold">Simeon Vibbi,</h4>
-            <span className="text-gray-600">Frontend Engineering</span>
+            <span className="text-gray-600">Frontend Engineer</span>
             <Link href="/signup">
               <button className="block mt-4 px-3 py-1 md:px-6 md:py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Join Blowmind</button>
             </Link>
@@ -188,20 +198,26 @@ export default function Landing() {
       </section>
 
       <section className="py-10 px-2 md:py-20 md:px-4 text-center bg-white dark:bg-gray-900">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex justify-center gap-4 mb-8">
-            <Image src={User1} alt="user" className="rounded-full object-fill" width={100} height={200} />
-            <Image src={User2} alt="user" className="rounded-full object-fill" width={100} height={200} />
-            <Image src={User3} alt="user" className="rounded-full object-fill" width={100} height={200} />
-          </div>
-          <h2 className="text-xl md:text-3xl font-bold mb-4">Write, read and connect with great minds on Blowmind</h2>
-          <p className="text-sm md:text-lg mb-8">
-            Share your great ideas, and also read write-ups based on your interests. Connect with people of the same interests and goals.
-          </p>
-          <Link href="/blog">
-            <button className="px-3 py-1 md:px-6 md:py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Get started</button>
-          </Link>
+      <div className="max-w-4xl mx-auto">
+        <div className="flex flex-wrap justify-center gap-8 md:gap-14 mb-8">
+            <div className="w-24 md:w-32 lg:w-40">
+                <Image src={User1} alt="user" className="rounded-2xl object-cover w-full h-full" width={200} height={200} />
+            </div>
+            <div className="w-24 md:w-32 lg:w-40">
+                <Image src={User2} alt="user" className="rounded-2xl object-cover w-full h-full" width={200} height={200} />
+            </div>
+            <div className="w-24 md:w-32 lg:w-40">
+                <Image src={User3} alt="user" className="rounded-2xl object-cover w-full h-full" width={200} height={200} />
+            </div>
         </div>
+        <h2 className="text-xl md:text-3xl font-bold mb-4">Write, read and connect with great minds on Blowmind</h2>
+        <p className="text-sm md:text-lg mb-8">
+            Share your great ideas, and also read write-ups based on your interests. Connect with people of the same interests and goals.
+        </p>
+        <Link href="/blog">
+            <button className="px-3 py-1 md:px-6 md:py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Get started</button>
+        </Link>
+    </div>
       </section>
 
       <footer className="py-4 px-2 md:py-8 md:px-4 bg-gray-800 text-white">
@@ -211,23 +227,25 @@ export default function Landing() {
                 <Image src={Logo} alt="Logo" className="text-2xl" width={150} height={100}  />
               </span>
             </div>
-            <ul>
-              <h5 className="text-xl font-bold mb-4">Explore</h5>
-              <li className="mb-2">Community</li>
-              <li className="mb-2">Trending blogs</li>
-              <li className="mb-2">Blowmind for teams</li>
-            </ul>
-            <ul>
-              <h5 className="text-xl font-bold mb-4">Support</h5>
-              <li className="mb-2">Support docs</li>
-              <li className="mb-2">Join Slack</li>
-              <li className="mb-2">Contact</li>
-            </ul>
-            <ul>
-              <h5 className="text-xl font-bold mb-4">Official blog</h5>
-              <li className="mb-2">Community blog</li>
-              <li className="mb-2">Engineering blog</li>
-            </ul>
+            <div className="flex space-x-6 justify-evenly md:space-x-20 lg:space-x-32">
+              <ul>
+                <h5 className="text-xl font-bold mb-4">Explore</h5>
+                <li className="mb-2">Community</li>
+                <li className="mb-2">Trending blogs</li>
+                <li className="mb-2">Blowmind for teams</li>
+              </ul>
+              <ul>
+                <h5 className="text-xl font-bold mb-4">Support</h5>
+                <li className="mb-2">Support docs</li>
+                <li className="mb-2">Join Slack</li>
+                <li className="mb-2">Contact</li>
+              </ul>
+              <ul>
+                <h5 className="text-xl font-bold mb-4">Official blog</h5>
+                <li className="mb-2">Community blog</li>
+                <li className="mb-2">Engineering blog</li>
+              </ul>
+            </div>
           </div>
           <div className="mt-8 text-center text-gray-400">
             <p>&copy; 2024 by KontriDev. All rights reserved.</p>
