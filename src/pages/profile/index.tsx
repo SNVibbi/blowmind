@@ -79,7 +79,7 @@ const Profile: React.FC<ProfileProps> = () => {
                                     backgroundColor: localColor || color,
                                 }}
                             >
-                                <i className="fas fa-share-square"></i>
+                                <i className="fas fa-share-square text-indigo-400"></i>
                                 <span className="text-indigo-400">Share profile</span>
                             </button>
                         </div>
