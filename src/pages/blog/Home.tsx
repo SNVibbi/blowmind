@@ -8,6 +8,7 @@ import { Post, User } from "../../Types";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import Footer from "../../components/Footer";
+import Searchbar from "@/components/Searchbar";
 
 type swProps = {
     sw: number;
@@ -36,6 +37,7 @@ const Home: React.FC<swProps> = ({ sw }) => {
         <>
         <div className="flex flex-col lg:flex-col">
             <BlogNavbar screenWidth={sw} mobileMenu={mobileMenu} setMobileMenu={setMobileMenu} />
+            <Searchbar setMobileMenu={setMobileMenu}/>
             <div className={`flex-1 p-4 ${sw > 1050 ? 'lg:flex lg:flex-col lg:space-x-4' : 'flex flex-row space-y-4'} mb-4`}>
                 {currentUser && currentUser.interests.length === 0 && <Interest />}
                 {posts && (

@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 
 interface SearchbarProps {
     setMobileMenu: React.Dispatch<React.SetStateAction<boolean>>
+    
 }
 
 const Searchbar: React.FC<SearchbarProps> = ({ setMobileMenu }) => {

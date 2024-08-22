@@ -36,7 +36,7 @@ const PostDetails: React.FC<PostDetailsProps> = ({ post }) => {
             <div className="flex items-center space-x-4 mt-4 md:mt-0">
                 <BookmarkIcon post={post} />
                 <button 
-                    className="text-gray-500 dark:text-gray-400"
+                    className="text-gray-900 dark:text-gray-400"
                     aria-label="More options"
                 >
                     <i className="fa fa-ellipsis-v"></i>

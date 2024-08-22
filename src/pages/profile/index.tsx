@@ -90,7 +90,7 @@ const Profile: React.FC<ProfileProps> = () => {
                                 {CurrentUser.interests.map((i: string) => (
                                     <li
                                         key={i}
-                                        className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded"
+                                        className="px-2 py-1 bg-gray-200 text-indigo-400 dark:bg-gray-700 rounded"
                                     >
                                         {i}
                                     </li>
