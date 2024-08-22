@@ -139,7 +139,7 @@ export default function Landing() {
             src={HeroImage} 
             alt="Welcome message" 
             className="mx-auto opacity-70" />
-          <h1 className="text-xl md:text-4xl font-bold mt-4">Welcome to Blowmind: A Haven for Text-Based Content</h1>
+          <h1 className="text-lg md:text-2xl font-bold mt-4">Welcome to Blowmind: A Haven for Text-Based Content</h1>
           {/* <p className="text-lg md:text-xl mt-2">Unleash the Power of Words, Connect with Like-minded Readers and Writers</p> */}
           <Link href="/blog" >
             <button 

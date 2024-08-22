@@ -5,6 +5,7 @@ import { useFirestore } from "../hooks/useFirestore";
 import { useAuthContext } from "../context/AuthContext";
 import { Post, Like } from "../Types";
 import '@fortawesome/fontawesome-free/css/all.min.css';
+import { toast } from "react-toastify";
 
 
 
@@ -23,7 +24,7 @@ const Reaction: React.FC<ReactionProps> = ({ post }) => {
 
     const handleLike = async () => {
         if (userLike){
-            console.log("You already liked this post");
+            toast.success("You already liked this post");
             return;
         }
         
@@ -41,7 +42,7 @@ const Reaction: React.FC<ReactionProps> = ({ post }) => {
             });
 
             if (response.error) {
-                console.error("Failed to like the post:", response.error)
+                toast.error("Failed to like the post")
             }
     };
 
