@@ -60,7 +60,7 @@ const PostList: React.FC<PostListProps> = ({ posts, msg }) => {
     };
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-6 max-w-6xl mx-auto px-4 mt-1">
             {posts?.length === 0 && (
                 <p className="text-center text-gray-500">{msg}</p>
             )}
@@ -70,8 +70,8 @@ const PostList: React.FC<PostListProps> = ({ posts, msg }) => {
                     key={post.id} 
                     onMouseEnter={() => handleMouseEnter(post)}
                 >
-                    <div className="flex items-center space-x-4">
-                        <Avatar src={post.author.photoURL || DefaultAvatar} className="w-16 h-16 md:w-22 md:h-22" />
+                    <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
+                        <Avatar src={post.author.photoURL || DefaultAvatar} className="w-16 h-16 sm:w-20 sm:h-20" />
                         <div className="flex-1">
                             <span className="font-semi-bold text-gray-900 dark:text-gray-100">
                                 {post.author.firstName} {post.author.lastName}
@@ -96,8 +96,8 @@ const PostList: React.FC<PostListProps> = ({ posts, msg }) => {
                         </div>
                     </div>
                     <div onClick={() => handleClick(post)}>
-                        <Link href={`#/post/${post.id}`}>
-                            <h2 className="mt-2 text-xl font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
+                        <Link href={`/post/${post.id}`}>
+                            <h2 className="text-xl font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
                                 {post.title}
                             </h2>
                             <div className="flex items-center text-sm text-gray-500 mt-1">
@@ -109,7 +109,8 @@ const PostList: React.FC<PostListProps> = ({ posts, msg }) => {
                                 dangerouslySetInnerHTML={{ __html: post.content }} 
                             />
                             {post.imageURL && (
-                                <Image 
+                                <div className="mt-4">
+                                    <Image 
                                     src={post.imageURL} 
                                     alt="Post Content" 
                                     className="mt-2 rounded-lg w-full object-cover"
@@ -118,6 +119,7 @@ const PostList: React.FC<PostListProps> = ({ posts, msg }) => {
                                     layout="responsive"
                                     priority 
                                 />
+                                </div>
                             )}
                         </Link>
                         <Reaction post={post} />

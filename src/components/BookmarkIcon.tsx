@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 import { useAuthContext } from '../context/AuthContext';
 import { useFirestore } from '../hooks/useFirestore';
 import { BookmarkedItem, BookmarkIconProps, BookmarkProps, BookmarkToAdd } from '../Types';
@@ -45,7 +46,7 @@ export default function BookmarkIcon ({ post }: BookmarkIconProps) {
 
         const handleClick = async () => {
             if (bookmarked.length) {
-                console.log("Post already bookmarked by you");
+                toast.success("Post already bookmarked by you");
                 return;
             } 
 

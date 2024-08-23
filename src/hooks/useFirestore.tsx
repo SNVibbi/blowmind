@@ -68,13 +68,13 @@ export const useFirestore = (collectionName: string) => {
 
             if (image) {
                 try {
-                    const uploadPath = `images/${image.name}`;
+                    const uploadPath = `images/${user?.uid}_${Date.now()}_${image.name}`;
                     const imageRef = ref(storage,uploadPath);
-                    await uploadBytes(imageRef, image)
+                    await uploadBytes(imageRef, image);
                     downloadURL = await getDownloadURL(imageRef);
                 } catch (uploadError: any) {
-                    console.error("Image upload error", uploadError)
-                    throw new Error("Failed to upload the image. Please try again")
+                    console.error("Image upload error", uploadError);
+                    throw new Error("Failed to upload the image. Please try again");
                 }
             }
 
@@ -102,19 +102,30 @@ export const useFirestore = (collectionName: string) => {
         }
     };
 
-    const updateDocument = async (id: string, updates: any) => {
+    const updateDocument = async (id: string, updates: any, image?: File) => {
         dispatch({ type: "IS_PENDING" });
         try {
-            const docRef = doc(db, collectionName, id);
-            await updateDoc(docRef,updates);
-            dispatchIfNotCancelled({ type: "UPDATED_DOCUMENT", payload: updates });
-            toast.success("Document updated successfully!")
-            return updates;
-        } catch (err: any) {
-            dispatchIfNotCancelled({ type: "ERROR", payload: err.message });
-            toast.error(`Error updating document: ${err.message}`);
-            return null;
-        }
+            if (image) {
+                    const uploadPath = `images/${user?.uid}_${Date.now()}_${image.name}`;
+                    const imageRef = ref(storage,uploadPath);
+                    await uploadBytes(imageRef, image);
+                    const downloadURL = await getDownloadURL(imageRef);
+                    updates.imageURL = downloadURL;
+                }
+
+                updates.userId = user?.uid;
+
+                const docRef = doc(db, collectionName, id);
+                await updateDoc(docRef,updates);
+                dispatchIfNotCancelled({ type: "UPDATED_DOCUMENT", payload: updates });
+                toast.success("Document updated successfully!")
+                return updates;
+            } catch (err: any) {
+                dispatchIfNotCancelled({ type: "ERROR", payload: err.message });
+                console.error("Firestore update error:", err)
+                toast.error(`Error updating document: ${err.message}`);
+                return null;
+            }
     };
 
     useEffect(() => {

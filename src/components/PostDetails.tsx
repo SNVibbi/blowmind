@@ -29,7 +29,7 @@ const PostDetails: React.FC<PostDetailsProps> = ({ post }) => {
                         {post.author.firstName} {post.author.lastName}
                     </h2>
                     <span className="text-gray-500 dark:text-gray-400 text-sm">
-                        {post.createdAt.toDate().toDateString().slice(3)}
+                        {post.createdAt.toDate().toDateString().slice(3) || "Unknown Date"}
                     </span>
                 </div>
             </div>
@@ -61,7 +61,7 @@ const PostDetails: React.FC<PostDetailsProps> = ({ post }) => {
             </div>
             <Reaction post={post} />
 
-            <div className="flex flex-col md'flex-row items-center mt-4 space-y-4 md:space-y-0 md:space-x-4">
+            <div className="flex flex-col md:flex-row items-center mt-4 space-y-4 md:space-y-0 md:space-x-4">
                 <Avatar className='w-12 h-12 md:w-16 md:h-16' src={user?.photoURL || DefaultAvatar} />
                 <ContentInput post={post} />
             </div>

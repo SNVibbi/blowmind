@@ -38,6 +38,7 @@ export interface Post {
 
   export interface Comment {
     id: string;
+    userId: string;
     displayName: string;
     photoURL: string;
     content: string;

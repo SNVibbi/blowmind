@@ -7,6 +7,7 @@ import Reaction from '../../components/Reaction';
 import { useState, useEffect } from 'react';
 import { Post } from '../../Types';
 import { toast } from 'react-toastify';
+import PostDetails from '@/components/PostDetails';
 
 
 const PostPage:  React.FC  = () => {
@@ -17,21 +18,39 @@ const PostPage:  React.FC  = () => {
   const [mobileMenu, setMobileMenu] = useState<boolean>(false);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    const handleResize = () => {
       setScreenWidth(window.innerWidth);
-    }
+    };
+
+    handleResize();
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+
   }, []);
+
+  const { document: post, error, isPending } = useDocument<Post>('posts', postId as string);
 
   useEffect(() => {
     if (!postId) {
       toast.error("Post ID is missing")
     }
-    toast.success(`Post ID: ${postId}`)
   }, [postId]);
 
-  const { document: post, error, isPending } = useDocument<Post>('posts', postId as string);
+  if (!postId || typeof postId !== 'string') {
+    return (
+      <>
+        <BlogNavbar 
+          screenWidth={screenWidth} 
+          mobileMenu={mobileMenu} 
+          setMobileMenu={setMobileMenu} 
+        />
+        <p className='text-gray-500'>Invalid post ID.</p>;
+        <Footer/>
+      </>
+    );
+  }
 
-  if (!postId) return <p className='text-gray-500'>Invalid post ID.</p>
 
   if (isPending) return <p>Loading post...</p>;
   if (error) return <p className="text-red-500">Error: {error}</p>;
@@ -44,13 +63,9 @@ const PostPage:  React.FC  = () => {
         mobileMenu={mobileMenu} 
         setMobileMenu={setMobileMenu} 
       />
-      <div className="p-6 max-w-3xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-md">
-        <h1 className="text-3xl font-bold mb-4 text-gray-900 dark:text-gray-100">{post.title}</h1>
-        <p className="text-gray-700 dark:text-gray-300">{post.content}</p>
-
-    
+      <div className="max-w-3xl mx-auto p-4">
+        <PostDetails post={post} />
         <Reaction post={post} />
-
         <PostComment post={post} />
       </div>
       <Footer />
