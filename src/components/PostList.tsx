@@ -96,7 +96,7 @@ const PostList: React.FC<PostListProps> = ({ posts, msg }) => {
                         </div>
                     </div>
                     <div onClick={() => handleClick(post)}>
-                        <Link href={`/post/${post.id}`}>
+                        <Link href={`#/post/${post.id}`}>
                             <h2 className="text-xl font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
                                 {post.title}
                             </h2>
