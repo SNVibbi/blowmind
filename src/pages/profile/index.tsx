@@ -1,4 +1,5 @@
 import Avatar from "../../components/Avatar";
+import withAuth from "../../hoc/withAuth";
 import PostList from "../../components/PostList";
 import { useAuthContext } from "../../context/AuthContext";
 import { useCollection } from "../../hooks/useCollection";
@@ -136,4 +137,4 @@ const Profile: React.FC<ProfileProps> = () => {
     );
 };
 
-export default Profile;
+export default withAuth(Profile);

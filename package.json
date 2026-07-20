@@ -9,6 +9,7 @@
     "lint": "next lint",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:rules": "firebase emulators:exec --only firestore --project demo-blowmind-rules \"vitest run -c vitest.rules.config.ts\"",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -18,6 +19,7 @@
     "figma-icons": "^0.0.20",
     "firebase": "^10.12.4",
     "flowbite": "^2.4.1",
+    "isomorphic-dompurify": "^3.19.0",
     "next": "14.2.5",
     "react": "^18",
     "react-dom": "^18",
@@ -30,6 +32,7 @@
     "uuid": "^10.0.0"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^3.0.4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/node": "^20",
@@ -40,6 +43,7 @@
     "autoprefixer": "^10.4.19",
     "eslint": "^8",
     "eslint-config-next": "14.2.5",
+    "firebase-tools": "^15.24.0",
     "jsdom": "^29.1.1",
     "postcss": "^8.4.39",
     "tailwindcss": "^3.4.6",

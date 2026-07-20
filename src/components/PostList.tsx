@@ -2,6 +2,7 @@ import { useAuthContext } from "../context/AuthContext";
 import { useFirestore } from "../hooks/useFirestore";
 import { useReadTime } from "../hooks/useReadTime";
 import { Post } from "../Types";
+import { sanitizeHtml } from "../lib/sanitize";
 import Link from "next/link";
 import React, { useState } from "react";
 import Avatar from "../components/Avatar";
@@ -104,9 +105,9 @@ const PostList: React.FC<PostListProps> = ({ posts, msg }) => {
                                 <i className="fas fa-book-reader mr-1"></i>
                                 <span>{calculateReadingTime(post.content)}</span>
                             </div>
-                            <p 
-                                className="mt-2 text-gray-700 dark:txt-gray-300" 
-                                dangerouslySetInnerHTML={{ __html: post.content }} 
+                            <p
+                                className="mt-2 text-gray-700 dark:txt-gray-300"
+                                dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content) }}
                             />
                             {post.imageURL && (
                                 <div className="mt-4">

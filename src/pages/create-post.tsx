@@ -1,4 +1,5 @@
 import { useAuthContext } from "../context/AuthContext";
+import withAuth from "../hoc/withAuth";
 import { useCategory } from "../hooks/useCategory";
 import { useDocument } from "../hooks/useDocument";
 import { useFirestore } from "../hooks/useFirestore";
@@ -8,7 +9,7 @@ import '@fortawesome/fontawesome-free/css/all.min.css';
 import Image from "next/image";
 import { toast } from "react-toastify";
 
-export default function Create(): ReactElement {
+function Create(): ReactElement {
     const { user } = useAuthContext();
     const { document: CurrentUser, error: userError } = useDocument("users", user?.uid || "defaultUserId"); 
     const router = useRouter();
@@ -165,3 +166,5 @@ export default function Create(): ReactElement {
         </form>
     );
 }
+
+export default withAuth(Create);

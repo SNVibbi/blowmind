@@ -119,6 +119,15 @@ const Login: React.FC = () => {
                                 </button>
                             </div>
                             
+                            <div className="mb-4 text-right">
+                                <Link
+                                    href="/forgot-password"
+                                    className="text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-400"
+                                >
+                                    Forgot password?
+                                </Link>
+                            </div>
+
                             {!isPending && (
                                 <button className="bg-indigo-600 mb-2 text-white w-full py-2 rounded-lg hover:bg-indigo-700">
                                 Login

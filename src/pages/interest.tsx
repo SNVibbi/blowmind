@@ -1,4 +1,5 @@
 import { useAuthContext } from "@/context/AuthContext";
+import withAuth from "../hoc/withAuth";
 import { useFirestore } from "../hooks/useFirestore";
 import useTheme from "../hooks/useTheme";
 import { useState } from "react";
@@ -91,4 +92,4 @@ const InterestComponent: React.FC = () => {
     );
 }
 
-export default InterestComponent;
+export default withAuth(InterestComponent);

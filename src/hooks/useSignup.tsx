@@ -1,6 +1,10 @@
 import { useAuthContext } from "../context/AuthContext";
 import { auth, storage } from "../utils/firebaseConfig";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+  updateProfile,
+} from "firebase/auth";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
@@ -79,6 +83,14 @@ const useSignup = (): UseSignup => {
       });
 
       await ensureUserProfile(user, { firstName, lastName, photoUrl, category });
+
+      // Best effort — a failed verification email must not fail signup.
+      try {
+        await sendEmailVerification(user);
+        toast.info("We sent a verification link to your email.");
+      } catch {
+        /* user can re-request verification later */
+      }
 
       dispatch({ type: "LOGIN", payload: user });
       toast.success("Signup successful!");

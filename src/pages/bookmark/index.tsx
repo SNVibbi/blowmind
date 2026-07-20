@@ -1,4 +1,5 @@
 import { Post } from "../../Types";
+import withAuth from "../../hoc/withAuth";
 import PostList from "../../components/PostList";
 import CustomSkeleton from "../../components/CustomSkeleton";
 import { useAuthContext } from "../../context/AuthContext";
@@ -6,7 +7,7 @@ import { useCollection } from "../../hooks/useCollection";
 
 
 
-export default function Bookmarks(): JSX.Element {
+function Bookmarks(): JSX.Element {
     const { user }: any = useAuthContext();
     const { documents: bookmarks, isPending, error } = useCollection<Post>("bookmarks", ["id", "==", user?.uid]);
 
@@ -23,3 +24,5 @@ export default function Bookmarks(): JSX.Element {
         </div>
     )
 }
+
+export default withAuth(Bookmarks);

@@ -5,6 +5,7 @@ import DefaultAvatar from "../../public/img/default-avatar.jpg"
 import Reaction from '../components/Reaction';
 import { useAuthContext } from '@/context/AuthContext';
 import { Post } from '../Types';
+import { sanitizeHtml } from '../lib/sanitize';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import Image from 'next/image';
 import React from 'react';
@@ -44,9 +45,9 @@ const PostDetails: React.FC<PostDetailsProps> = ({ post }) => {
             </div>
 
             <div className="mt-4">
-                <p 
-                    className="text-gray-800 dark:text-gray-200" 
-                    dangerouslySetInnerHTML={{ __html: post.content }}
+                <p
+                    className="text-gray-800 dark:text-gray-200"
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content) }}
                 />
                  {post.imageURL && (
                         <Image 

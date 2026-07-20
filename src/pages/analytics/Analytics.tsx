@@ -1,14 +1,16 @@
 import Avatar from "../../components/Avatar";
+import withAuth from "../../hoc/withAuth";
 import Reaction from "../../components/Reaction";
 import { useDocument } from "../../hooks/useDocument";
 import useTheme from "../../hooks/useTheme";
 import { Post } from "../../Types";
+import { sanitizeHtml } from "../../lib/sanitize";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import Skeleton from "react-loading-skeleton";
 
 
-export default function Analytics() {
+function Analytics() {
     const router = useRouter();
     const { id } = router.query;
     const { changeMode } = useTheme();
@@ -63,9 +65,9 @@ export default function Analytics() {
                                 />
                             </div>
                         )}
-                        <p 
-                            className="text-gray-800 dark:text-gray-200" 
-                            dangerouslySetInnerHTML={{ __html: post.content }} 
+                        <p
+                            className="text-gray-800 dark:text-gray-200"
+                            dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content) }}
                         />
                     </div>
                     <div className="mt-4">
@@ -108,3 +110,6 @@ export default function Analytics() {
         </div>
     )
 }
+
+
+export default withAuth(Analytics);
