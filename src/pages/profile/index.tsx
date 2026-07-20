@@ -2,7 +2,7 @@ import Avatar from "../../components/Avatar";
 import withAuth from "../../hoc/withAuth";
 import PostList from "../../components/PostList";
 import { useAuthContext } from "../../context/AuthContext";
-import { useCollection } from "../../hooks/useCollection";
+import { usePaginatedPosts } from "../../hooks/usePaginatedPosts";
 import { useBookmarkedPosts } from "../../hooks/useBookmarkedPosts";
 import { useDocument } from "../../hooks/useDocument";
 import useTheme from "../../hooks/useTheme";
@@ -33,10 +33,7 @@ const Profile: React.FC<ProfileProps> = () => {
         }
     }, []);
 
-        const { documents: posts } = useCollection<Post>(
-            "posts",
-            userId ? ["author.id","==",userId] : null
-        );
+    const { posts } = usePaginatedPosts(userId);
 
     const { posts: bookmarks } = useBookmarkedPosts(userId);
 

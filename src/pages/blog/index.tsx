@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 // import withAuth from '../../hoc/withAuth';
-import Home from '../../pages/blog/Home';
+import Home from '../../components/HomeFeed';
 
 const BlogHome: React.FC = () => {
 

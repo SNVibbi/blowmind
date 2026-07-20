@@ -25,7 +25,7 @@ const overviews: OverviewItem[] = [
     {icon: "bookmark",  name: "Bookmarks", to: "/bookmarks"},
     {icon: "users",  name: "Team Blogs", to: "/b"},
     {icon: "envelop",  name: "Draft", to: "/d"},
-    {icon: "chart-bar",  name: "Analytics", to: "posts/analytics"},
+    {icon: "chart-bar",  name: "Analytics", to: "/analytics"},
 ];
 
 const tags: string[] = [
