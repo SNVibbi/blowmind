@@ -39,6 +39,16 @@ service cloud.firestore {
             || request.auth.token.get('admin', false) == true);
     }
 
+    // A suspended user (flag set on their profile by a moderator) is
+    // blocked from creating content. One get() per create — creates are
+    // far rarer than reads, so the cost is acceptable.
+    function isSuspended() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid))
+             .data.get('suspended', false) == true;
+    }
+
     // ------------------------------------------------------------------
     // users/{userId}
     // ------------------------------------------------------------------
@@ -61,16 +71,22 @@ service cloud.firestore {
         && request.resource.data.get('headline', '') is string
         && request.resource.data.get('headline', '').size() <= 200;
 
-      // Owners may edit their profile but never reassign identity fields.
-      allow update: if isOwner(userId)
-        && affectedKeys().hasOnly([
-          'firstName', 'lastName', 'photoUrl', 'photoURL', 'headline',
-          'interests', 'interest', 'category', 'online', 'updatedAt'
-        ])
-        && request.resource.data.get('firstName', '') is string
-        && request.resource.data.get('firstName', '').size() <= 100
-        && request.resource.data.get('headline', '') is string
-        && request.resource.data.get('headline', '').size() <= 200;
+      // Owners may edit their profile but never reassign identity fields
+      // or their own suspension status. Moderators may set suspension
+      // fields only.
+      allow update: if (isOwner(userId)
+          && affectedKeys().hasOnly([
+            'firstName', 'lastName', 'photoUrl', 'photoURL', 'headline',
+            'interests', 'interest', 'category', 'online', 'updatedAt'
+          ])
+          && request.resource.data.get('firstName', '') is string
+          && request.resource.data.get('firstName', '').size() <= 100
+          && request.resource.data.get('headline', '') is string
+          && request.resource.data.get('headline', '').size() <= 200)
+        || (isModerator()
+          && affectedKeys().hasOnly([
+            'suspended', 'suspendedReason', 'suspendedBy', 'suspendedAt'
+          ]));
 
       // Account deletion is a server-controlled operation (soft delete).
       allow delete: if false;
@@ -88,6 +104,7 @@ service cloud.firestore {
         || isModerator();
 
       allow create: if isSignedIn()
+        && !isSuspended()
         && request.resource.data.userId == request.auth.uid
         && request.resource.data.title is string
         && request.resource.data.title.size() > 0
@@ -132,6 +149,7 @@ service cloud.firestore {
       match /comments/{commentId} {
         allow read: if true;
         allow create: if isSignedIn()
+          && !isSuspended()
           && request.resource.data.userId == request.auth.uid
           && request.resource.data.content is string
           && request.resource.data.content.size() > 0
@@ -228,6 +246,38 @@ service cloud.firestore {
         && blockId == request.auth.uid + '_' + request.resource.data.targetUid;
       allow update: if false;
       allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // ------------------------------------------------------------------
+    // appeals/{uid} — a suspended user's appeal (one per user)
+    // ------------------------------------------------------------------
+    match /appeals/{uid} {
+      allow read: if isModerator() || isOwner(uid);
+      allow create: if isOwner(uid)
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.message is string
+        && request.resource.data.message.size() > 0
+        && request.resource.data.message.size() <= 2000
+        && request.resource.data.status == 'open'
+        && request.resource.data.keys().hasOnly([
+          'uid', 'message', 'status', 'createdAt'
+        ]);
+      // The appellant may not mutate a filed appeal; moderators triage it.
+      allow update: if isModerator()
+        && affectedKeys().hasOnly(['status', 'resolvedAt', 'resolvedBy']);
+      allow delete: if false;
+    }
+
+    // ------------------------------------------------------------------
+    // auditLog/{entryId} — record of moderator actions
+    // ------------------------------------------------------------------
+    match /auditLog/{entryId} {
+      allow read: if isModerator();
+      // Append-only, and the actor must be the authenticated moderator.
+      allow create: if isModerator()
+        && request.resource.data.actorUid == request.auth.uid
+        && request.resource.data.action is string;
+      allow update, delete: if false;
     }
 
     // Everything not matched above is denied (Firestore default), stated
