@@ -51,12 +51,12 @@ const Home: React.FC<swProps> = ({ sw }) => {
                                     <p className="text-gray-600 dark:text-indigo-300">Explore different content</p>
                                 </div>
                                 <button
-                                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 dark:hover:bg-blue-800 flex items-center"
+                                    className="btn-primary"
                                     onClick={() => router.push("/create-post")}
                                 >
-                                    <i className="fas fa-pencil-alt"></i>
-                                    <span className="ml-2 hidden sm:inline">Post a content</span>
-                                    <span className="ml-2 sm:hidden">Post</span>
+                                    <i className="fas fa-pencil-alt" aria-hidden="true"></i>
+                                    <span className="hidden sm:inline">Write a post</span>
+                                    <span className="sm:hidden">Post</span>
                                 </button>
                             </div>
                             <ul className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-t-lg p-4">

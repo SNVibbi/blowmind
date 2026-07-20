@@ -60,8 +60,19 @@ node scripts/generate-raster-assets.mjs
 - `next/image` can't serve raw SVG without `dangerouslyAllowSVG`, so the
   avatar fallback ships as PNG; decorative SVGs use plain `<img>`.
 
+## Applied restyle (Stage 11)
+The design-system classes and brand palette are now used across the
+high-traffic surfaces:
+- **Auth** (login, signup): single disabled-aware `.btn-primary` submit
+  (was two conditionally-rendered buttons), brand-colored toggle/links.
+- **Composer**: `.btn-primary` publish; the add-media control is now a
+  real `<button>` (keyboard-accessible); brand-colored draft banner.
+- **Feed** (HomeFeed): `.btn-primary` "Write a post".
+- **Post cards** (PostList): `.card` wrapper, brand-colored titles.
+- **Moderation dashboard**: built on `.btn`/`.card`/state components.
+
 ## Not done (future polish)
 - Per-page titles/descriptions for post detail (better SEO/shares).
 - `next/font` self-hosting; tree-shaking Font Awesome to used glyphs.
-- Full component restyle to the new `.btn`/`.card` classes (applied
-  incrementally to avoid regressions).
+- Migrating remaining secondary surfaces (profile header, aside) — safe
+  to do incrementally now that the classes exist.
