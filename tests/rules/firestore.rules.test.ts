@@ -643,6 +643,78 @@ describe("reports collection", () => {
   });
 });
 
+describe("blocks collection", () => {
+  it("allows a user to block someone with the ID convention", async () => {
+    await assertSucceeds(
+      setDoc(doc(db(ALICE), "blocks", `${ALICE}_${BOB}`), {
+        userId: ALICE,
+        targetUid: BOB,
+        type: "block",
+        createdAt: new Date(),
+      })
+    );
+  });
+
+  it("denies blocking yourself", async () => {
+    await assertFails(
+      setDoc(doc(db(ALICE), "blocks", `${ALICE}_${ALICE}`), {
+        userId: ALICE,
+        targetUid: ALICE,
+        type: "block",
+        createdAt: new Date(),
+      })
+    );
+  });
+
+  it("denies creating a block entry for another user", async () => {
+    await assertFails(
+      setDoc(doc(db(BOB), "blocks", `${ALICE}_${BOB}`), {
+        userId: ALICE,
+        targetUid: BOB,
+        type: "block",
+        createdAt: new Date(),
+      })
+    );
+  });
+
+  it("denies an ID that breaks the uid_targetUid convention", async () => {
+    await assertFails(
+      setDoc(doc(db(ALICE), "blocks", "nope"), {
+        userId: ALICE,
+        targetUid: BOB,
+        type: "block",
+        createdAt: new Date(),
+      })
+    );
+  });
+
+  it("denies an invalid block type", async () => {
+    await assertFails(
+      setDoc(doc(db(ALICE), "blocks", `${ALICE}_${BOB}`), {
+        userId: ALICE,
+        targetUid: BOB,
+        type: "shadowban",
+        createdAt: new Date(),
+      })
+    );
+  });
+
+  it("keeps a user's block list private and deletable by the owner", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "blocks", `${ALICE}_${BOB}`), {
+        userId: ALICE,
+        targetUid: BOB,
+        type: "block",
+        createdAt: new Date(),
+      });
+    });
+    await assertFails(getDoc(doc(db(BOB), "blocks", `${ALICE}_${BOB}`)));
+    await assertSucceeds(getDoc(doc(db(ALICE), "blocks", `${ALICE}_${BOB}`)));
+    await assertFails(deleteDoc(doc(db(BOB), "blocks", `${ALICE}_${BOB}`)));
+    await assertSucceeds(deleteDoc(doc(db(ALICE), "blocks", `${ALICE}_${BOB}`)));
+  });
+});
+
 describe("unknown collections", () => {
   it("denies reads and writes to unmatched collections", async () => {
     await assertFails(getDoc(doc(db(ALICE), "admin-secrets", "s1")));

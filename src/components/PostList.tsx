@@ -11,7 +11,9 @@ import Options from "../components/Options";
 import DefaultAvatar from "../../public/img/default-avatar.jpg"
 import Image from "next/image";
 import Reaction from "../components/Reaction";
+import BlockButton from "./BlockButton";
 import { EmptyState } from "./states/StateViews";
+import { useBlockedUsers } from "../hooks/useBlockedUsers";
 
 
 interface PostListProps {
@@ -23,8 +25,14 @@ interface PostListProps {
 const PostList: React.FC<PostListProps> = ({ posts, msg }) => {
     const { user } = useAuthContext();
     const { calculateReadingTime } = useReadTime();
+    const { blockedSet } = useBlockedUsers();
 
     const [options, setOptions] = useState<{ [key: number]: boolean}>({});
+
+    // Hide posts by authors the current user has blocked/muted.
+    const visiblePosts = posts?.filter(
+        (post) => !blockedSet.has(post.author?.id)
+    ) ?? null;
 
     const handleClick = async (post: Post) => {
         try {
@@ -53,10 +61,10 @@ const PostList: React.FC<PostListProps> = ({ posts, msg }) => {
 
     return (
         <div className="space-y-6 max-w-6xl mx-auto px-4 mt-1">
-            {posts?.length === 0 && (
+            {visiblePosts?.length === 0 && (
                 <EmptyState image="/img/empty-posts.svg" title="Nothing here yet" message={msg} />
             )}
-            {posts?.map((post, index) => (
+            {visiblePosts?.map((post, index) => (
                 <div
                     className="card"
                     key={post.id}
@@ -76,6 +84,12 @@ const PostList: React.FC<PostListProps> = ({ posts, msg }) => {
                         </div>
                         <div className="ml-auto flex items-center space-x-2">
                             {options[index] && <Options post={post} />}
+                            {user && user.uid !== post.author.id && (
+                                <BlockButton
+                                    targetUid={post.author.id}
+                                    targetName={post.author.firstName}
+                                />
+                            )}
                             {user?.uid !== post.author.id && <BookmarkIcon post={post} />}
                             {user?.uid === post.author.id && (
                                 <button 

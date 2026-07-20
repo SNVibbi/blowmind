@@ -50,9 +50,25 @@ The page is gated by `withModerator` (reads the custom claim via
 enforced by `firestore.rules`, so a non-moderator who forces their way to
 the page just gets permission-denied.
 
+## Block / mute (user-level)
+
+Separate from moderator actions, any signed-in user can **block/mute**
+another user (`BlockButton` on posts). Entries live in
+`blocks/{blockerUid}_{targetUid}` — a private, owner-only list
+(`blockService`, `useBlockedUsers`). The client filters blocked authors'
+**posts** (feed/profile/bookmarks via `PostList`) and **comments**
+(`PostComment`). Users manage their list at **`/settings`** (unblock).
+
+Rules keep each block list private to its owner, enforce the
+`{uid}_{targetUid}` ID convention, forbid blocking yourself, and restrict
+`type` to `block`/`mute`. Covered by rule tests.
+
+Note: filtering is client-side (a personal view filter), so it hides
+content from the blocker; it does not prevent the blocked user from
+posting. Cross-user interaction blocking would need server enforcement.
+
 ## Not yet built (roadmap)
 
-- Block/mute between users.
 - Rate limiting and spam heuristics (Cloud Functions foundation now
   exists — see functions/).
 - Suspension/appeal workflow and a dedicated moderator audit log

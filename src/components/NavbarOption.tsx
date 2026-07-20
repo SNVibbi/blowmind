@@ -32,6 +32,14 @@ export default function NavbarOption() {
                     <i className="fas fa-shield-halved" aria-hidden="true"></i>
                 </Link>
             )}
+            <Link
+                href="/settings"
+                className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100"
+                aria-label="Settings"
+                title="Settings"
+            >
+                <i className="fas fa-gear" aria-hidden="true"></i>
+            </Link>
         </div>
     );
 }

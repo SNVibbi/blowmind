@@ -1,6 +1,7 @@
 import Avatar from "./Avatar";
 import { formatDistanceToNow } from "date-fns";
 import { useComments } from "../hooks/useInteractions";
+import { useBlockedUsers } from "../hooks/useBlockedUsers";
 import { Post } from "../Types";
 
 interface PostCommentProps {
@@ -9,12 +10,15 @@ interface PostCommentProps {
 
 const PostComment: React.FC<PostCommentProps> = ({ post }) => {
   const { comments, error } = useComments(post.id);
+  const { blockedSet } = useBlockedUsers();
+  const visibleComments =
+    comments?.filter((c) => !blockedSet.has(c.userId)) ?? null;
 
   if (error) {
     return <p className="mt-4 text-red-600">{error}</p>;
   }
 
-  if (!comments) {
+  if (!visibleComments) {
     return (
       <p className="mt-4 text-gray-500" role="status">
         Loading comments…
@@ -24,7 +28,7 @@ const PostComment: React.FC<PostCommentProps> = ({ post }) => {
 
   return (
     <div className="mt-4">
-      {comments.length > 0 ? (
+      {visibleComments.length > 0 ? (
         <h4 className="flex items-center space-x-2 text-lg font-semibold">
           <span>All comments</span>
           <i className="fas fa-chevron-down" aria-hidden="true"></i>
@@ -33,7 +37,7 @@ const PostComment: React.FC<PostCommentProps> = ({ post }) => {
         <h4 className="text-lg font-semibold">No comments yet</h4>
       )}
       <ul className="mt-2 space-y-4">
-        {comments.map((comment) => (
+        {visibleComments.map((comment) => (
           <li
             key={comment.id}
             className="border-b border-gray-200 dark:border-gray-700 pb-4"
