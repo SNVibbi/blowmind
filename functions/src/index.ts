@@ -43,6 +43,69 @@ function bumpPostCounter(
     });
 }
 
+// ---- Rate limiting ---------------------------------------------------
+// Server-enforced sliding-window limits per user. Clients can't bypass
+// them (Admin SDK), and without functions deployed there is simply no
+// limiting (graceful degradation). Tune limits here.
+const RATE_LIMITS = {
+  post: { limit: 5, windowMs: 60_000 }, // 5 posts / minute
+  comment: { limit: 15, windowMs: 60_000 }, // 15 comments / minute
+} as const;
+
+type RateKind = keyof typeof RATE_LIMITS;
+
+/**
+ * Record one action of `kind` for `uid` in a rolling window and report
+ * whether it exceeded the limit. Atomic via a transaction on
+ * rateLimits/{uid}.
+ */
+async function recordAndCheckRate(
+  uid: string,
+  kind: RateKind
+): Promise<boolean> {
+  const { limit, windowMs } = RATE_LIMITS[kind];
+  const ref = db.doc(`rateLimits/${uid}`);
+  const now = Date.now();
+  const startField = `${kind}_windowStart`;
+  const countField = `${kind}_count`;
+
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const data = snap.exists ? snap.data() ?? {} : {};
+    const windowStart = (data[startField] as number) ?? 0;
+    const count = (data[countField] as number) ?? 0;
+
+    let nextStart = windowStart;
+    let nextCount: number;
+    if (now - windowStart > windowMs) {
+      nextStart = now;
+      nextCount = 1;
+    } else {
+      nextCount = count + 1;
+    }
+
+    tx.set(
+      ref,
+      { [startField]: nextStart, [countField]: nextCount },
+      { merge: true }
+    );
+    return nextCount > limit;
+  });
+}
+
+async function logRateEvent(
+  uid: string,
+  kind: RateKind,
+  path: string
+): Promise<void> {
+  await db.collection("rateLimitEvents").add({
+    uid,
+    kind,
+    path,
+    createdAt: FieldValue.serverTimestamp(),
+  });
+}
+
 // ---- Likes -----------------------------------------------------------
 export const onLikeCreated = onDocumentCreated(
   "posts/{postId}/likes/{uid}",
@@ -56,12 +119,38 @@ export const onLikeDeleted = onDocumentDeleted(
 // ---- Comments --------------------------------------------------------
 export const onCommentCreated = onDocumentCreated(
   "posts/{postId}/comments/{commentId}",
-  (event) => bumpPostCounter(event.params.postId, "commentCount", 1)
+  async (event) => {
+    const { postId } = event.params;
+    await bumpPostCounter(postId, "commentCount", 1);
+
+    const uid = event.data?.get("userId");
+    if (uid && (await recordAndCheckRate(uid, "comment"))) {
+      // Over the limit: remove the offending comment (its deletion
+      // trigger will decrement the counter) and log the event.
+      await event.data?.ref.delete();
+      await logRateEvent(uid, "comment", event.data!.ref.path);
+    }
+  }
 );
 export const onCommentDeleted = onDocumentDeleted(
   "posts/{postId}/comments/{commentId}",
   (event) => bumpPostCounter(event.params.postId, "commentCount", -1)
 );
+
+// ---- Posts: rate limiting on creation --------------------------------
+export const onPostCreated = onDocumentCreated("posts/{postId}", async (event) => {
+  const uid = event.data?.get("userId");
+  if (!uid) return;
+  if (await recordAndCheckRate(uid, "post")) {
+    // Over the limit: soft-remove (reviewable) and log.
+    await event.data?.ref.update({
+      moderationStatus: "removed",
+      moderatedBy: "system:rate-limit",
+      moderatedAt: FieldValue.serverTimestamp(),
+    });
+    await logRateEvent(uid, "post", event.data!.ref.path);
+  }
+});
 
 // ---- Views (write-once) ----------------------------------------------
 export const onViewCreated = onDocumentCreated(

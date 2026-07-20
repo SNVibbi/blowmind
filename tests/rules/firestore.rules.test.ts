@@ -715,6 +715,19 @@ describe("blocks collection", () => {
   });
 });
 
+describe("server-only collections", () => {
+  it("denies clients any access to rateLimits and rateLimitEvents", async () => {
+    // These are written only by Cloud Functions (Admin SDK bypasses rules).
+    await assertFails(getDoc(doc(db(ALICE), "rateLimits", ALICE)));
+    await assertFails(
+      setDoc(doc(db(ALICE), "rateLimits", ALICE), { post_count: 0 })
+    );
+    await assertFails(
+      setDoc(doc(db(ALICE), "rateLimitEvents", "e1"), { uid: ALICE })
+    );
+  });
+});
+
 describe("unknown collections", () => {
   it("denies reads and writes to unmatched collections", async () => {
     await assertFails(getDoc(doc(db(ALICE), "admin-secrets", "s1")));
