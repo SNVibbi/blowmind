@@ -1,14 +1,20 @@
 rules_version = '2';
 
-// BlowMind Firestore security rules.
+// BlowMind Firestore security rules (Stage 4 data model).
 //
-// IMPORTANT: these rules protect the CURRENT (legacy) data model, in which
-// comments/likes/bookmarks/views live as arrays inside each post document.
-// That model forces one deliberate compromise: any signed-in user may
-// update a post's interaction fields (and only those fields). Stage 4
-// moves interactions into subcollections, after which post documents
-// become owner-write-only. Do not "fix" that here by blocking interaction
-// updates — it would break commenting and liking entirely.
+// Interactions live in subcollections with denormalized counters on the
+// post document:
+//   posts/{postId}/comments/{commentId}   — one doc per comment
+//   posts/{postId}/likes/{uid}            — doc ID = liker's uid
+//   posts/{postId}/views/{uid}            — doc ID = viewer's uid
+//   bookmarks/{uid_postId}                — one doc per user+post
+//
+// KNOWN COMPROMISE (documented in docs/DATA_MODEL.md): counter fields on
+// the post doc are incremented by clients in the same batch/transaction
+// as the interaction write. Rules restrict WHICH fields non-owners can
+// touch but cannot verify the increment amount matches a subcollection
+// write. Moving counters behind Cloud Functions is the planned hardening
+// once server-side code is introduced.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -30,7 +36,7 @@ service cloud.firestore {
     match /users/{userId} {
       // Profiles are visible to signed-in users only.
       // KNOWN LIMITATION: profile docs currently include the email field;
-      // splitting private fields out is planned for the data-model stage.
+      // splitting private fields out is planned for a later stage.
       allow read: if isSignedIn();
 
       allow create: if isOwner(userId)
@@ -78,35 +84,89 @@ service cloud.firestore {
         && request.resource.data.content.size() <= 100000
         && request.resource.data.keys().hasOnly([
           'title', 'content', 'imageURL', 'userId', 'author', 'createdAt',
-          'comments', 'likes', 'bookmarks', 'views', 'tags', 'share',
-          'expand', 'expands'
-        ]);
+          'tags', 'share', 'commentCount', 'likeCount', 'bookmarkCount',
+          'viewCount', 'expands'
+        ])
+        && request.resource.data.get('commentCount', 0) == 0
+        && request.resource.data.get('likeCount', 0) == 0
+        && request.resource.data.get('bookmarkCount', 0) == 0
+        && request.resource.data.get('viewCount', 0) == 0;
 
-      // Owners may edit their post but never change its ownership.
-      // Everyone else may touch ONLY the interaction fields (legacy
-      // embedded-array model — see file header).
+      // Owners may edit their post but never change ownership or created
+      // date. Everyone else may only bump the interaction counters (the
+      // legacy embedded arrays are no longer writable by non-owners).
       allow update: if isSignedIn()
         && (
           (resource.data.userId == request.auth.uid
             && !affectedKeys().hasAny(['userId', 'createdAt']))
           ||
           affectedKeys().hasOnly([
-            'comments', 'likes', 'bookmarks', 'views', 'expand', 'expands'
+            'commentCount', 'likeCount', 'bookmarkCount', 'viewCount',
+            'expands'
           ])
         );
 
       allow delete: if isOwner(resource.data.userId);
+
+      // ----------------------------------------------------------------
+      // posts/{postId}/comments/{commentId}
+      // ----------------------------------------------------------------
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if isSignedIn()
+          && request.resource.data.userId == request.auth.uid
+          && request.resource.data.content is string
+          && request.resource.data.content.size() > 0
+          && request.resource.data.content.size() <= 2000
+          && request.resource.data.keys().hasOnly([
+            'userId', 'displayName', 'photoURL', 'content', 'createdAt'
+          ]);
+        // Comments are immutable; authors may delete their own.
+        allow update: if false;
+        allow delete: if isOwner(resource.data.userId);
+      }
+
+      // ----------------------------------------------------------------
+      // posts/{postId}/likes/{uid} — doc ID must be the liker's uid
+      // ----------------------------------------------------------------
+      match /likes/{uid} {
+        allow read: if true;
+        allow create: if isOwner(uid)
+          && request.resource.data.uid == uid
+          && request.resource.data.keys().hasOnly([
+            'uid', 'displayName', 'photoURL', 'createdAt'
+          ]);
+        allow update: if false;
+        allow delete: if isOwner(uid);
+      }
+
+      // ----------------------------------------------------------------
+      // posts/{postId}/views/{uid} — write-once, doc ID = viewer's uid
+      // ----------------------------------------------------------------
+      match /views/{uid} {
+        allow read: if isSignedIn();
+        allow create: if isOwner(uid)
+          && request.resource.data.uid == uid
+          && request.resource.data.keys().hasOnly(['uid', 'createdAt']);
+        allow update, delete: if false;
+      }
     }
 
     // ------------------------------------------------------------------
-    // bookmarks/{bookmarkId}
+    // bookmarks/{bookmarkId} — ID convention: {uid}_{postId}
     // ------------------------------------------------------------------
     match /bookmarks/{bookmarkId} {
-      allow read: if isSignedIn();
+      // Bookmarks are private to their owner.
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
       allow create: if isSignedIn()
-        && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isSignedIn()
-        && resource.data.userId == request.auth.uid;
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.postId is string
+        && request.resource.data.keys().hasOnly([
+          'userId', 'postId', 'createdAt'
+        ])
+        && bookmarkId == request.auth.uid + '_' + request.resource.data.postId;
+      allow update: if false;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     // Everything not matched above is denied (Firestore default), stated

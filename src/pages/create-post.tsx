@@ -74,17 +74,15 @@ function Create(): ReactElement {
         const post = {
             title,
             content,
-            comments: [],
-            likes: [],
             share: "",
-            bookmarks: [],
-            expand: 0,
-            views: [],
             author,
             tags: newTags,
+            commentCount: 0,
+            likeCount: 0,
+            bookmarkCount: 0,
+            viewCount: 0,
+            expands: 0,
         };
-
-        console.log("Submitting post:", post)
 
         await addDocument(post, file || undefined);
 

@@ -1,5 +1,5 @@
 import { useAuthContext } from "../context/AuthContext";
-import { useFirestore } from "../hooks/useFirestore";
+import { incrementExpands, recordView } from "../lib/postService";
 import { useReadTime } from "../hooks/useReadTime";
 import { Post } from "../Types";
 import { sanitizeHtml } from "../lib/sanitize";
@@ -11,7 +11,6 @@ import Options from "../components/Options";
 import DefaultAvatar from "../../public/img/default-avatar.jpg"
 import Image from "next/image";
 import Reaction from "../components/Reaction";
-import { toast } from "react-toastify";
 
 
 interface PostListProps {
@@ -22,35 +21,26 @@ interface PostListProps {
 
 const PostList: React.FC<PostListProps> = ({ posts, msg }) => {
     const { user } = useAuthContext();
-    const { updateDocument } = useFirestore("posts");
     const { calculateReadingTime } = useReadTime();
 
     const [options, setOptions] = useState<{ [key: number]: boolean}>({});
 
     const handleClick = async (post: Post) => {
         try {
-            await updateDocument (post.id, {
-                expands: (post.expands += 1),
-            });
-        } catch (error) {
-            console.error("Error updating post:", error);
-            toast.error("Error Updating post")
+            await incrementExpands(post.id);
+        } catch {
+            // Non-critical engagement metric — never bother the reader.
         }
     };
 
     const handleMouseEnter = async (post: Post) => {
-       try {
-        const viewed = post.views.filter((view: any) => view.uid === user?.uid); 
-        const views = { uid: user?.uid!, id: new Date().toISOString() };
-        
-        if (!viewed.length) {
-            await updateDocument(post.id, { views: [...post.views, views] });
-        } 
-       } catch (error) {
-        console.error("Error updating views:", error);
-        toast.error("Error updating views")
-       }
-
+        if (!user) return;
+        try {
+            // Idempotent: recordView only counts the first view per user.
+            await recordView(post.id, user.uid);
+        } catch {
+            // Non-critical engagement metric — never bother the reader.
+        }
     };
 
     const handleOptions = (index: number) => {

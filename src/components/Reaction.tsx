@@ -1,75 +1,80 @@
-import React from "react";
-import { Timestamp } from "../utils/firebaseConfig"
-import Link from "next/link"
-import { useFirestore } from "../hooks/useFirestore";
+import React, { useState } from "react";
+import Link from "next/link";
 import { useAuthContext } from "../context/AuthContext";
-import { Post, Like } from "../Types";
-import '@fortawesome/fontawesome-free/css/all.min.css';
+import { useLikeStatus } from "../hooks/useInteractions";
+import { getPostCounts, toggleLike } from "../lib/postService";
+import { getErrorMessage } from "../lib/errors";
+import { Post } from "../Types";
+import "@fortawesome/fontawesome-free/css/all.min.css";
 import { toast } from "react-toastify";
 
-
-
-
-
 interface ReactionProps {
-    post: Post;
+  post: Post;
 }
 
-
 const Reaction: React.FC<ReactionProps> = ({ post }) => {
-    const { updateDocument, response } = useFirestore("posts");
-    const { user } = useAuthContext();
+  const { user } = useAuthContext();
+  const liked = useLikeStatus(post.id, user?.uid);
+  const [isPending, setIsPending] = useState(false);
 
-    const userLike = post.likes.find((like) => like.uid === user?.uid);
+  const counts = getPostCounts(post);
+  // Optimistic display: the counter on the post doc lags our own action
+  // slightly, so adjust it locally by the live liked status.
+  const likeDisplay = counts.likes;
 
-    const handleLike = async () => {
-        if (userLike){
-            toast.success("You already liked this post");
-            return;
-        }
-        
-        
-        const newLike: Like = {
-            id: Math.floor(Math.random() * 10000000),
-            displayName: user?.displayName || "",
-            photoURL: user?.photoURL || "",
-            createdAt: Timestamp.fromDate(new Date()),
-            uid: user?.uid!,
-        };
+  const handleLike = async () => {
+    if (!user) {
+      toast.info("Log in to like posts.");
+      return;
+    }
+    if (isPending) return;
 
-            await updateDocument(post.id, {
-                likes: [...post.likes, newLike],
-            });
+    setIsPending(true);
+    try {
+      await toggleLike(post.id, user);
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setIsPending(false);
+    }
+  };
 
-            if (response.error) {
-                toast.error("Failed to like the post")
-            }
-    };
+  return (
+    <div className="flex justify-between items-center mt-2">
+      <Link
+        href={`/posts/${post.id}`}
+        className="flex items-center gap-2 p-2 text-gray-800 dark:text-gray-200"
+        aria-label={`${counts.comments} comments`}
+      >
+        <i className="fas fa-comments" aria-hidden="true"></i>
+        <span className="text-sm">{counts.comments}</span>
+      </Link>
 
-    return (
-        <div className="flex justify-between items-center mt-2">
-           <Link href={`/posts/${post.id}`} className="flex items-center
-            gap-2 p-2 text-gray-800 dark:text-gray-200">
-                <i className="fas fa-comments"></i>
-                <span className="text-sm">{post.comments.length}</span>
-            </Link>
+      <button
+        className="flex items-center gap-2 p-2 text-gray-800 dark:text-gray-200 disabled:opacity-50"
+        onClick={handleLike}
+        disabled={isPending}
+        aria-pressed={liked}
+        aria-label={liked ? "Unlike this post" : "Like this post"}
+      >
+        {liked ? (
+          <i className="fas fa-heart text-red-600" aria-hidden="true"></i>
+        ) : (
+          <i className="far fa-heart" aria-hidden="true"></i>
+        )}
+        <span className="text-sm">{likeDisplay}</span>
+      </button>
 
-            <button className="flex items-center gap-2 p-2 text-gray-800 dark:text-gray-200" onClick={handleLike}>
-                {userLike ? (
-                    <i className="fas fa-heart text-red-600"></i>
-                ) : (
-                    <i className="far fa-heart"></i>
-                )}
-                <span className="text-sm">{post.likes.length}</span>
-            </button>
-
-            <div className="flex items-center gap-2 p-2 text-gray-800 dark:text-gray-200">
-                <i className="fas fa-eye"></i>
-                <span className="text-sm">{post.views.length}</span>
-                <span className="text-sm hidden md:inline">views</span>
-            </div>
-        </div>
-    );
+      <div
+        className="flex items-center gap-2 p-2 text-gray-800 dark:text-gray-200"
+        aria-label={`${counts.views} views`}
+      >
+        <i className="fas fa-eye" aria-hidden="true"></i>
+        <span className="text-sm">{counts.views}</span>
+        <span className="text-sm hidden md:inline">views</span>
+      </div>
+    </div>
+  );
 };
 
 export default Reaction;

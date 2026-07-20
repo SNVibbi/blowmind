@@ -5,6 +5,7 @@ import { useDocument } from "../../hooks/useDocument";
 import useTheme from "../../hooks/useTheme";
 import { Post } from "../../Types";
 import { sanitizeHtml } from "../../lib/sanitize";
+import { getPostCounts } from "../../lib/postService";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import Skeleton from "react-loading-skeleton";
@@ -81,7 +82,7 @@ function Analytics() {
                             </div>
                             <div>
                                 <span className="text-gray-800 dark:text-gray-200">Unique views</span>
-                                <p className="text-lg font-bold">{post.views.length}</p>
+                                <p className="text-lg font-bold">{getPostCounts(post).views}</p>
                             </div>
                         </li>
                         <li className="flex items-center gap-4 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
@@ -99,7 +100,7 @@ function Analytics() {
                             </div>
                             <div>
                                 <span className="text-gray-800 dark:text-gray-200">Bookmarks</span>
-                                <p className="text-lg font-bold">{post.bookmarks.length}</p>
+                                <p className="text-lg font-bold">{getPostCounts(post).bookmarks}</p>
                             </div>
                         </li>
                     </ul>
