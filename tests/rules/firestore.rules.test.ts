@@ -60,6 +60,10 @@ function db(uid: string | null) {
     : testEnv.unauthenticatedContext().firestore();
 }
 
+function moderatorDb(uid: string) {
+  return testEnv.authenticatedContext(uid, { moderator: true }).firestore();
+}
+
 async function seedAlicePost(postId = "post1") {
   await testEnv.withSecurityRulesDisabled(async (ctx) => {
     await setDoc(doc(ctx.firestore(), "posts", postId), alicePost);
@@ -492,6 +496,140 @@ describe("bookmarks collection", () => {
       });
     });
     await assertFails(deleteDoc(doc(db(BOB), "bookmarks", `${ALICE}_post1`)));
+  });
+});
+
+describe("moderation on posts", () => {
+  it("hides removed posts from the public but shows them to the owner", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "posts", "removed1"), {
+        ...alicePost,
+        moderationStatus: "removed",
+      });
+    });
+    await assertFails(getDoc(doc(db(BOB), "posts", "removed1")));
+    await assertSucceeds(getDoc(doc(db(ALICE), "posts", "removed1")));
+  });
+
+  it("lets moderators read and soft-remove any post", async () => {
+    await seedAlicePost();
+    await assertSucceeds(
+      updateDoc(doc(moderatorDb("mod-uid"), "posts", "post1"), {
+        moderationStatus: "removed",
+      })
+    );
+  });
+
+  it("denies a normal user setting moderationStatus", async () => {
+    await seedAlicePost();
+    await assertFails(
+      updateDoc(doc(db(ALICE), "posts", "post1"), {
+        moderationStatus: "removed",
+      })
+    );
+  });
+});
+
+describe("reports collection", () => {
+  it("allows a user to report content with the ID convention", async () => {
+    await assertSucceeds(
+      setDoc(doc(db(BOB), "reports", `${BOB}_post_post1`), {
+        reporterUid: BOB,
+        targetType: "post",
+        targetId: "post1",
+        postId: "post1",
+        reason: "spam",
+        details: "",
+        status: "open",
+        createdAt: new Date(),
+      })
+    );
+  });
+
+  it("denies reporting under a spoofed reporter uid", async () => {
+    await assertFails(
+      setDoc(doc(db(BOB), "reports", `${ALICE}_post_post1`), {
+        reporterUid: ALICE,
+        targetType: "post",
+        targetId: "post1",
+        postId: "post1",
+        reason: "spam",
+        details: "",
+        status: "open",
+        createdAt: new Date(),
+      })
+    );
+  });
+
+  it("denies creating a report already marked resolved", async () => {
+    await assertFails(
+      setDoc(doc(db(BOB), "reports", `${BOB}_post_post1`), {
+        reporterUid: BOB,
+        targetType: "post",
+        targetId: "post1",
+        postId: "post1",
+        reason: "spam",
+        details: "",
+        status: "resolved",
+        createdAt: new Date(),
+      })
+    );
+  });
+
+  it("denies a normal user reading someone else's report", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "reports", `${ALICE}_post_post1`), {
+        reporterUid: ALICE,
+        targetType: "post",
+        targetId: "post1",
+        postId: "post1",
+        reason: "spam",
+        status: "open",
+        createdAt: new Date(),
+      });
+    });
+    await assertFails(getDoc(doc(db(BOB), "reports", `${ALICE}_post_post1`)));
+  });
+
+  it("allows a moderator to read and triage reports", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "reports", `${ALICE}_post_post1`), {
+        reporterUid: ALICE,
+        targetType: "post",
+        targetId: "post1",
+        postId: "post1",
+        reason: "spam",
+        status: "open",
+        createdAt: new Date(),
+      });
+    });
+    await assertSucceeds(
+      getDoc(doc(moderatorDb("mod-uid"), "reports", `${ALICE}_post_post1`))
+    );
+    await assertSucceeds(
+      updateDoc(doc(moderatorDb("mod-uid"), "reports", `${ALICE}_post_post1`), {
+        status: "resolved",
+      })
+    );
+  });
+
+  it("denies a normal user triaging a report", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "reports", `${ALICE}_post_post1`), {
+        reporterUid: ALICE,
+        targetType: "post",
+        targetId: "post1",
+        postId: "post1",
+        reason: "spam",
+        status: "open",
+        createdAt: new Date(),
+      });
+    });
+    await assertFails(
+      updateDoc(doc(db(ALICE), "reports", `${ALICE}_post_post1`), {
+        status: "resolved",
+      })
+    );
   });
 });
 

@@ -1,6 +1,7 @@
 import Avatar from '../components/Avatar';
 import BookmarkIcon from '../components/BookmarkIcon';
 import ContentInput from '../components/ContentInput';
+import ReportButton from '../components/ReportButton';
 import DefaultAvatar from "../../public/img/default-avatar.jpg"
 import Reaction from '../components/Reaction';
 import { useAuthContext } from '@/context/AuthContext';
@@ -36,12 +37,9 @@ const PostDetails: React.FC<PostDetailsProps> = ({ post }) => {
             </div>
             <div className="flex items-center space-x-4 mt-4 md:mt-0">
                 <BookmarkIcon post={post} />
-                <button 
-                    className="text-gray-900 dark:text-gray-400"
-                    aria-label="More options"
-                >
-                    <i className="fa fa-ellipsis-v"></i>
-                </button>
+                {user && user.uid !== post.author.id && (
+                    <ReportButton targetType="post" targetId={post.id} postId={post.id} />
+                )}
             </div>
 
             <div className="mt-4">
