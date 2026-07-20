@@ -3,7 +3,6 @@ import { useAuthContext } from "../context/AuthContext";
 import { useEffect, useState } from "react"
 import { auth, db } from "../utils/firebaseConfig";
 import { doc, setDoc, updateDoc } from "firebase/firestore";
-import "firebase/compat/auth"
 import { toast } from "react-toastify";
 
 
