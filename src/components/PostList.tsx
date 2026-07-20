@@ -11,6 +11,7 @@ import Options from "../components/Options";
 import DefaultAvatar from "../../public/img/default-avatar.jpg"
 import Image from "next/image";
 import Reaction from "../components/Reaction";
+import { EmptyState } from "./states/StateViews";
 
 
 interface PostListProps {
@@ -53,7 +54,7 @@ const PostList: React.FC<PostListProps> = ({ posts, msg }) => {
     return (
         <div className="space-y-6 max-w-6xl mx-auto px-4 mt-1">
             {posts?.length === 0 && (
-                <p className="text-center text-gray-500">{msg}</p>
+                <EmptyState icon="feather-pointed" title="Nothing here yet" message={msg} />
             )}
             {posts?.map((post, index) => (
                 <div 
@@ -87,7 +88,7 @@ const PostList: React.FC<PostListProps> = ({ posts, msg }) => {
                         </div>
                     </div>
                     <div onClick={() => handleClick(post)}>
-                        <Link href={`#/post/${post.id}`}>
+                        <Link href={`/posts/${post.id}`}>
                             <h2 className="text-xl font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
                                 {post.title}
                             </h2>
