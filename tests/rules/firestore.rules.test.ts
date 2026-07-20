@@ -893,7 +893,7 @@ describe("audit log", () => {
 });
 
 describe("server-only collections", () => {
-  it("denies clients any access to rateLimits and rateLimitEvents", async () => {
+  it("denies clients any access to rateLimits, rateLimitEvents, spamEvents", async () => {
     // These are written only by Cloud Functions (Admin SDK bypasses rules).
     await assertFails(getDoc(doc(db(ALICE), "rateLimits", ALICE)));
     await assertFails(
@@ -901,6 +901,10 @@ describe("server-only collections", () => {
     );
     await assertFails(
       setDoc(doc(db(ALICE), "rateLimitEvents", "e1"), { uid: ALICE })
+    );
+    await assertFails(getDoc(doc(db(ALICE), "spamEvents", "s1")));
+    await assertFails(
+      setDoc(doc(db(ALICE), "spamEvents", "s1"), { uid: ALICE })
     );
   });
 });

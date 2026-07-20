@@ -51,6 +51,23 @@ over-limit **comment** is deleted; each breach is logged to
 Admin-SDK-only — clients are denied all access by rules (tested). Without
 functions deployed there is simply no limiting (graceful degradation).
 
+## Spam heuristics
+
+Two layers share the same heuristic logic (app `src/lib/spam.ts` /
+functions `functions/src/spam.ts` — keep in sync):
+
+- **Client (advisory):** the composer and comment box run `detectSpam`
+  and block submission with a clear reason, so users get instant feedback
+  instead of a silent server removal.
+- **Server (enforced):** the create triggers re-run the checks plus a
+  stateful **duplicate-content** check (same text reposted within 10 min).
+  On detection, posts are soft-removed (`moderatedBy: "system:spam"`) and
+  comments deleted; each is logged to `spamEvents` (Admin-SDK-only).
+
+Stateless checks (conservative to limit false positives): excessive links
+(>5), mostly-capitalized text, long repeated-character runs, and a
+starter banned-phrase list. Tune the lists/thresholds in `spam.ts`.
+
 ## Known limitations (tracked, not yet closed)
 
 - **Client-written counters.** Rules restrict which fields non-owners can

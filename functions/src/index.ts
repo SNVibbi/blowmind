@@ -23,6 +23,7 @@ import { onSchedule } from "firebase-functions/v2/scheduler";
 import { initializeApp } from "firebase-admin/app";
 import { getFirestore, FieldValue, Timestamp } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
+import { detectSpam, contentHash } from "./spam.js";
 
 initializeApp();
 setGlobalOptions({ region: "us-central1", maxInstances: 10 });
@@ -107,6 +108,55 @@ async function logRateEvent(
   });
 }
 
+// ---- Spam heuristics -------------------------------------------------
+const DUPLICATE_WINDOW_MS = 10 * 60_000; // same content within 10 min = spam
+
+async function logSpamEvent(
+  uid: string,
+  reason: string,
+  path: string
+): Promise<void> {
+  await db.collection("spamEvents").add({
+    uid,
+    reason,
+    path,
+    createdAt: FieldValue.serverTimestamp(),
+  });
+}
+
+/**
+ * Content-based spam check: stateless heuristics plus a stateful
+ * duplicate-content check (same text reposted within a short window).
+ * Returns a reason string if spammy, else null.
+ */
+async function checkContentSpam(
+  uid: string,
+  text: string
+): Promise<string | null> {
+  const stateless = detectSpam(text);
+  if (stateless.spam) return stateless.reason;
+
+  const hash = contentHash(text);
+  const ref = db.doc(`rateLimits/${uid}`);
+  const now = Date.now();
+
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const data = snap.exists ? snap.data() ?? {} : {};
+    const lastHash = data.lastContentHash as string | undefined;
+    const lastAt = (data.lastContentAt as number) ?? 0;
+
+    const isDuplicate = lastHash === hash && now - lastAt < DUPLICATE_WINDOW_MS;
+
+    tx.set(
+      ref,
+      { lastContentHash: hash, lastContentAt: now },
+      { merge: true }
+    );
+    return isDuplicate ? "duplicate-content" : null;
+  });
+}
+
 // ---- Likes -----------------------------------------------------------
 export const onLikeCreated = onDocumentCreated(
   "posts/{postId}/likes/{uid}",
@@ -125,11 +175,20 @@ export const onCommentCreated = onDocumentCreated(
     await bumpPostCounter(postId, "commentCount", 1);
 
     const uid = event.data?.get("userId");
-    if (uid && (await recordAndCheckRate(uid, "comment"))) {
+    if (!uid) return;
+
+    if (await recordAndCheckRate(uid, "comment")) {
       // Over the limit: remove the offending comment (its deletion
       // trigger will decrement the counter) and log the event.
       await event.data?.ref.delete();
       await logRateEvent(uid, "comment", event.data!.ref.path);
+      return;
+    }
+
+    const spamReason = await checkContentSpam(uid, event.data?.get("content") ?? "");
+    if (spamReason) {
+      await event.data?.ref.delete();
+      await logSpamEvent(uid, spamReason, event.data!.ref.path);
     }
   }
 );
@@ -142,14 +201,25 @@ export const onCommentDeleted = onDocumentDeleted(
 export const onPostCreated = onDocumentCreated("posts/{postId}", async (event) => {
   const uid = event.data?.get("userId");
   if (!uid) return;
-  if (await recordAndCheckRate(uid, "post")) {
-    // Over the limit: soft-remove (reviewable) and log.
-    await event.data?.ref.update({
+
+  const softRemove = (by: string) =>
+    event.data?.ref.update({
       moderationStatus: "removed",
-      moderatedBy: "system:rate-limit",
+      moderatedBy: by,
       moderatedAt: FieldValue.serverTimestamp(),
     });
+
+  if (await recordAndCheckRate(uid, "post")) {
+    await softRemove("system:rate-limit");
     await logRateEvent(uid, "post", event.data!.ref.path);
+    return;
+  }
+
+  const text = `${event.data?.get("title") ?? ""} ${event.data?.get("content") ?? ""}`;
+  const spamReason = await checkContentSpam(uid, text);
+  if (spamReason) {
+    await softRemove("system:spam");
+    await logSpamEvent(uid, spamReason, event.data!.ref.path);
   }
 });
 
