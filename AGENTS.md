@@ -89,6 +89,17 @@ server actions. All Firestore/Storage access happens from the browser, so
   migrations against the live project, Vercel/domain changes) remain
   owner-only.
 
+## Status (updated 2026-07-20)
+
+Stages 1–7 complete and merged to `master`. Verification at last merge:
+strict TypeScript clean, ESLint clean, 21 unit tests + 52 security-rule
+tests passing, production build passes (13 routes). Outstanding items are
+the owner-only production actions (deploy rules/indexes, run the data
+migration, wire a monitoring service, load-test against staging) and the
+tracked hardening in docs/SECURITY.md and docs/SCALING.md (Cloud
+Functions for counters/moderation/notifications, dedicated search,
+App Check). See the docs/ folder for the full picture.
+
 ## Stage plan
 
 Work strictly in order. Do not start a stage while the previous one has

@@ -30,6 +30,15 @@ service cloud.firestore {
       return request.resource.data.diff(resource.data).affectedKeys();
     }
 
+    // Privileged roles are carried in custom claims set server-side only.
+    // A normal user can never grant themselves a role (claims are not
+    // client-writable), so this is safe as the authorization source.
+    function isModerator() {
+      return isSignedIn()
+        && (request.auth.token.get('moderator', false) == true
+            || request.auth.token.get('admin', false) == true);
+    }
+
     // ------------------------------------------------------------------
     // users/{userId}
     // ------------------------------------------------------------------
@@ -71,8 +80,12 @@ service cloud.firestore {
     // posts/{postId}
     // ------------------------------------------------------------------
     match /posts/{postId} {
-      // Blog content is public.
-      allow read: if true;
+      // Public content, but content hidden by moderation is visible only
+      // to its owner and moderators.
+      allow read: if resource == null
+        || resource.data.get('moderationStatus', 'ok') != 'removed'
+        || (isSignedIn() && resource.data.userId == request.auth.uid)
+        || isModerator();
 
       allow create: if isSignedIn()
         && request.resource.data.userId == request.auth.uid
@@ -92,21 +105,24 @@ service cloud.firestore {
         && request.resource.data.get('bookmarkCount', 0) == 0
         && request.resource.data.get('viewCount', 0) == 0;
 
-      // Owners may edit their post but never change ownership or created
-      // date. Everyone else may only bump the interaction counters (the
-      // legacy embedded arrays are no longer writable by non-owners).
+      // Owners may edit their post but never change ownership, created
+      // date, or moderation status. Non-owners may only bump interaction
+      // counters. Moderators may set moderationStatus (soft-remove).
       allow update: if isSignedIn()
         && (
           (resource.data.userId == request.auth.uid
-            && !affectedKeys().hasAny(['userId', 'createdAt']))
+            && !affectedKeys().hasAny(['userId', 'createdAt', 'moderationStatus']))
           ||
           affectedKeys().hasOnly([
             'commentCount', 'likeCount', 'bookmarkCount', 'viewCount',
             'expands'
           ])
+          ||
+          (isModerator()
+            && affectedKeys().hasOnly(['moderationStatus', 'moderatedAt', 'moderatedBy']))
         );
 
-      allow delete: if isOwner(resource.data.userId);
+      allow delete: if isOwner(resource.data.userId) || isModerator();
 
       // ----------------------------------------------------------------
       // posts/{postId}/comments/{commentId}
@@ -167,6 +183,30 @@ service cloud.firestore {
         && bookmarkId == request.auth.uid + '_' + request.resource.data.postId;
       allow update: if false;
       allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // ------------------------------------------------------------------
+    // reports/{reportId} — ID convention: {reporterUid}_{type}_{targetId}
+    // ------------------------------------------------------------------
+    match /reports/{reportId} {
+      // Reporters can see their own reports; moderators see all.
+      allow read: if isModerator()
+        || (isSignedIn() && resource.data.reporterUid == request.auth.uid);
+
+      allow create: if isSignedIn()
+        && request.resource.data.reporterUid == request.auth.uid
+        && request.resource.data.targetType in ['post', 'comment']
+        && request.resource.data.reason is string
+        && request.resource.data.get('details', '').size() <= 1000
+        && request.resource.data.status == 'open'
+        && reportId == request.auth.uid + '_' +
+             request.resource.data.targetType + '_' +
+             request.resource.data.targetId;
+
+      // Reporters may not mutate a filed report; moderators triage it.
+      allow update: if isModerator()
+        && affectedKeys().hasOnly(['status', 'resolution', 'resolvedAt', 'resolvedBy']);
+      allow delete: if false;
     }
 
     // Everything not matched above is denied (Firestore default), stated
