@@ -2,18 +2,20 @@ import { db } from "../utils/firebaseConfig";
 import { Post } from "../Types";
 import { User as FirebaseUser } from "firebase/auth";
 import {
+  addDoc,
   collection,
   deleteDoc,
   doc,
   documentId,
+  getDoc,
   getDocs,
   increment,
   query,
   runTransaction,
   serverTimestamp,
+  setDoc,
   updateDoc,
   where,
-  writeBatch,
 } from "firebase/firestore";
 
 /**
@@ -40,16 +42,21 @@ export function getPostCounts(post: Post): PostCounts {
   };
 }
 
+// Counters (likeCount/commentCount/viewCount/bookmarkCount) are owned by
+// Cloud Functions triggered on these subcollection writes — see
+// functions/src/index.ts. Clients write ONLY the interaction document;
+// security rules block clients from writing the count fields, so counts
+// can't be forged. (Until functions are deployed, counts stay stale but
+// all interactions still work.)
+
 /**
  * Like or unlike a post. Uses likes/{uid} as the document ID so a user
- * can never like twice, and a transaction so the counter stays in sync.
- * Returns true if the post is liked after the call.
+ * can never like twice. Returns true if the post is liked after the call.
  */
 export async function toggleLike(
   postId: string,
   user: FirebaseUser
 ): Promise<boolean> {
-  const postRef = doc(db, "posts", postId);
   const likeRef = doc(db, "posts", postId, "likes", user.uid);
 
   return runTransaction(db, async (tx) => {
@@ -57,7 +64,6 @@ export async function toggleLike(
 
     if (likeSnap.exists()) {
       tx.delete(likeRef);
-      tx.update(postRef, { likeCount: increment(-1) });
       return false;
     }
 
@@ -67,79 +73,61 @@ export async function toggleLike(
       photoURL: user.photoURL ?? "",
       createdAt: serverTimestamp(),
     });
-    tx.update(postRef, { likeCount: increment(1) });
     return true;
   });
 }
 
-/** Add a comment and bump the counter atomically. */
+/** Add a comment (counter maintained by Cloud Function). */
 export async function addComment(
   postId: string,
   user: FirebaseUser,
   content: string
 ): Promise<void> {
-  const batch = writeBatch(db);
-  const postRef = doc(db, "posts", postId);
-  const commentRef = doc(collection(db, "posts", postId, "comments"));
-
-  batch.set(commentRef, {
+  await addDoc(collection(db, "posts", postId, "comments"), {
     userId: user.uid,
     displayName: user.displayName ?? "",
     photoURL: user.photoURL ?? "",
     content,
     createdAt: serverTimestamp(),
   });
-  batch.update(postRef, { commentCount: increment(1) });
-
-  await batch.commit();
 }
 
 /**
  * Record a unique view. views/{uid} as the doc ID makes this naturally
- * idempotent; the transaction only increments on first view.
+ * idempotent; only the first view creates the doc (counter via Function).
  */
 export async function recordView(
   postId: string,
   uid: string
 ): Promise<void> {
-  const postRef = doc(db, "posts", postId);
   const viewRef = doc(db, "posts", postId, "views", uid);
-
-  await runTransaction(db, async (tx) => {
-    const viewSnap = await tx.get(viewRef);
-    if (viewSnap.exists()) return;
-
-    tx.set(viewRef, { uid, createdAt: serverTimestamp() });
-    tx.update(postRef, { viewCount: increment(1) });
-  });
+  const viewSnap = await getDoc(viewRef);
+  if (viewSnap.exists()) return;
+  await setDoc(viewRef, { uid, createdAt: serverTimestamp() });
 }
 
 /**
  * Bookmark or un-bookmark a post. bookmarks/{uid_postId} keeps one
- * bookmark per user per post. Returns true if bookmarked after the call.
+ * bookmark per user per post (counter via Function). Returns true if
+ * bookmarked after the call.
  */
 export async function toggleBookmark(
   postId: string,
   uid: string,
   currentlyBookmarked: boolean
 ): Promise<boolean> {
-  const batch = writeBatch(db);
-  const postRef = doc(db, "posts", postId);
   const bookmarkRef = doc(db, "bookmarks", `${uid}_${postId}`);
 
   if (currentlyBookmarked) {
-    batch.delete(bookmarkRef);
-    batch.update(postRef, { bookmarkCount: increment(-1) });
+    await deleteDoc(bookmarkRef);
   } else {
-    batch.set(bookmarkRef, {
+    await setDoc(bookmarkRef, {
       userId: uid,
       postId,
       createdAt: serverTimestamp(),
     });
-    batch.update(postRef, { bookmarkCount: increment(1) });
   }
 
-  await batch.commit();
   return !currentlyBookmarked;
 }
 

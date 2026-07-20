@@ -105,18 +105,20 @@ service cloud.firestore {
         && request.resource.data.get('bookmarkCount', 0) == 0
         && request.resource.data.get('viewCount', 0) == 0;
 
-      // Owners may edit their post but never change ownership, created
-      // date, or moderation status. Non-owners may only bump interaction
-      // counters. Moderators may set moderationStatus (soft-remove).
+      // Interaction counters (commentCount/likeCount/bookmarkCount/
+      // viewCount) are owned by Cloud Functions via the Admin SDK, which
+      // bypasses rules — so NO client may write them here.
+      //  - Owners may edit their post's content only.
+      //  - Anyone may bump `expands` (low-stakes, no subcollection source).
+      //  - Moderators may set moderation status.
       allow update: if isSignedIn()
         && (
           (resource.data.userId == request.auth.uid
-            && !affectedKeys().hasAny(['userId', 'createdAt', 'moderationStatus']))
+            && affectedKeys().hasOnly([
+              'title', 'content', 'imageURL', 'author', 'tags', 'share'
+            ]))
           ||
-          affectedKeys().hasOnly([
-            'commentCount', 'likeCount', 'bookmarkCount', 'viewCount',
-            'expands'
-          ])
+          affectedKeys().hasOnly(['expands'])
           ||
           (isModerator()
             && affectedKeys().hasOnly(['moderationStatus', 'moderatedAt', 'moderatedBy']))

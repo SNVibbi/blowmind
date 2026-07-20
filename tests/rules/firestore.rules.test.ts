@@ -210,12 +210,22 @@ describe("posts collection", () => {
     );
   });
 
-  it("allows another user to bump interaction counters", async () => {
+  it("allows anyone to bump expands (low-stakes counter)", async () => {
     await seedAlicePost();
     await assertSucceeds(
       updateDoc(doc(db(BOB), "posts", "post1"), {
-        likeCount: increment(1),
+        expands: increment(1),
       })
+    );
+  });
+
+  it("denies clients writing interaction counters (Functions own them)", async () => {
+    await seedAlicePost();
+    await assertFails(
+      updateDoc(doc(db(BOB), "posts", "post1"), { likeCount: increment(1) })
+    );
+    await assertFails(
+      updateDoc(doc(db(ALICE), "posts", "post1"), { commentCount: increment(1) })
     );
   });
 
@@ -235,12 +245,12 @@ describe("posts collection", () => {
     );
   });
 
-  it("denies another user editing title even alongside counters", async () => {
+  it("denies the owner writing their own post's counters", async () => {
     await seedAlicePost();
     await assertFails(
-      updateDoc(doc(db(BOB), "posts", "post1"), {
-        title: "defaced",
-        likeCount: increment(1),
+      updateDoc(doc(db(ALICE), "posts", "post1"), {
+        title: "New title",
+        likeCount: increment(5),
       })
     );
   });
