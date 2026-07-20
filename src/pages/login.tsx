@@ -72,10 +72,10 @@ const Login: React.FC = () => {
                            )}
                             <div className="flex justify-between mb-4">
                                 <Link href="/signup">
-                                    <button className="text-indigo-600 hover:text-indigo-800 dark:text-white dark:hover:text-gray-300">Register</button>
+                                    <button className="text-brand-600 hover:text-brand-700 dark:text-white dark:hover:text-gray-300">Register</button>
                                 </Link>
                                 <Link href="/login">
-                                    <button className="text-indigo-600 font-bold border-b-2 border-indigo-600">Login</button>
+                                    <button className="text-brand-600 font-bold border-b-2 border-brand-600">Login</button>
                                 </Link>
                             </div>
 
@@ -122,22 +122,19 @@ const Login: React.FC = () => {
                             <div className="mb-4 text-right">
                                 <Link
                                     href="/forgot-password"
-                                    className="text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-400"
+                                    className="text-sm text-brand-600 hover:text-brand-700 dark:text-brand-400"
                                 >
                                     Forgot password?
                                 </Link>
                             </div>
 
-                            {!isPending && (
-                                <button className="bg-indigo-600 mb-2 text-white w-full py-2 rounded-lg hover:bg-indigo-700">
-                                Login
-                                </button>
-                            )}
-                            {isPending && (
-                                <button className="bg-indigo-600 text-white w-full py-2 rounded-lg" disabled>
-                                    Logging In...
-                                </button>
-                            )}
+                            <button
+                                type="submit"
+                                disabled={isPending}
+                                className="btn-primary mb-2 w-full"
+                            >
+                                {isPending ? "Logging in…" : "Login"}
+                            </button>
 
                             <GoogleButton 
                                 handleSign={googleSignIn}

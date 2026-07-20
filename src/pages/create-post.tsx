@@ -127,7 +127,7 @@ function Create(): ReactElement {
         <form className="p-6 space-y-6 bg-white dark:bg-gray-800 rounded-lg shadow-md" onSubmit={handleSubmit}>
             {response.error && <div className="text-red-600" role="alert">{response.error}</div>}
             {restored && (title || content) && (
-                <div className="flex items-center justify-between rounded-md bg-indigo-50 dark:bg-indigo-900/40 px-3 py-2 text-sm text-indigo-800 dark:text-indigo-200">
+                <div className="flex items-center justify-between rounded-md bg-brand-50 dark:bg-brand-900/40 px-3 py-2 text-sm text-brand-700 dark:text-brand-200">
                     <span>
                         <i className="fas fa-clock-rotate-left mr-2" aria-hidden="true"></i>
                         Restored your unsaved draft.
@@ -142,18 +142,22 @@ function Create(): ReactElement {
                 </div>
             )}
             <div className="flex justify-between items-center mb-4">
-                <button 
-                    type="submit" 
-                    className={`btn ${response.isPending ? "opacity-50 cursor-not-allowed" : ""}`} 
+                <button
+                    type="submit"
+                    className="btn-primary"
                     disabled={response.isPending}
                 >
-                    {response.isPending ? "Publishing..." : "Publish"}
+                    {response.isPending ? "Publishing…" : "Publish"}
                 </button>
-                <i 
-                    onClick={() => setAdd(!add)} 
-                    className={`fas ${add ? "fa-times-circle" : "fa-plus-circle"} text-3xl cursor-pointer text-blue-600 dark:text-blue-400`}
-                    title={add ? "Cancel" : "Add Image/Video"}
-                ></i>
+                <button
+                    type="button"
+                    onClick={() => setAdd(!add)}
+                    className="text-3xl text-brand-600 dark:text-brand-400"
+                    aria-label={add ? "Cancel adding media" : "Add image"}
+                    title={add ? "Cancel" : "Add image"}
+                >
+                    <i className={`fas ${add ? "fa-times-circle" : "fa-plus-circle"}`} aria-hidden="true"></i>
+                </button>
             </div>
             {!add ? (
                 <div className="space-y-4">

@@ -57,9 +57,9 @@ const PostList: React.FC<PostListProps> = ({ posts, msg }) => {
                 <EmptyState image="/img/empty-posts.svg" title="Nothing here yet" message={msg} />
             )}
             {posts?.map((post, index) => (
-                <div 
-                    className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300" 
-                    key={post.id} 
+                <div
+                    className="card"
+                    key={post.id}
                     onMouseEnter={() => handleMouseEnter(post)}
                 >
                     <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
@@ -89,7 +89,7 @@ const PostList: React.FC<PostListProps> = ({ posts, msg }) => {
                     </div>
                     <div onClick={() => handleClick(post)}>
                         <Link href={`/posts/${post.id}`}>
-                            <h2 className="text-xl font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
+                            <h2 className="text-xl font-bold text-brand-600 dark:text-brand-400 hover:underline">
                                 {post.title}
                             </h2>
                             <div className="flex items-center text-sm text-gray-500 mt-1">
