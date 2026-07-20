@@ -1,104 +1,62 @@
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { useAuthContext } from "../context/AuthContext";
-import { useEffect, useState } from "react"
-import { auth, db } from "../utils/firebaseConfig";
-import { doc, setDoc, updateDoc } from "firebase/firestore";
+import { useState } from "react";
+import { auth } from "../utils/firebaseConfig";
+import { ensureUserProfile } from "../lib/userService";
+import { getAppError } from "../lib/errors";
+import { useRouter } from "next/router";
 import { toast } from "react-toastify";
 
-
-
-
 const useGoogle = () => {
-    const [isCancelled, setIsCancelled] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [isPending, setIsPending] = useState(false);
-    const { dispatch } = useAuthContext();
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, setIsPending] = useState(false);
+  const { dispatch } = useAuthContext();
+  const router = useRouter();
 
-    const googleSignUp = async () => {
-        setError(null);
-        setIsPending(true);
+  /**
+   * One flow for both "sign up" and "sign in" with Google: Firebase
+   * creates the auth user if needed, and ensureUserProfile creates or
+   * merges the users/{uid} document without overwriting existing data.
+   */
+  const signInWithGoogle = async () => {
+    setError(null);
+    setIsPending(true);
 
-        try {
-            const provider = new GoogleAuthProvider();
-            const res = await signInWithPopup(auth, provider);
+    try {
+      const provider = new GoogleAuthProvider();
+      const res = await signInWithPopup(auth, provider);
 
-            if (!res) {
-                throw new Error("Could not complete signup")
-            }
+      const { profile, created } = await ensureUserProfile(res.user);
 
-            if (res.user.displayName) {
-                const splitName: string[] = res.user.displayName.split(" ");
-                const firstName: string = splitName[0];
-                const lastName: string = splitName[1];
+      dispatch({ type: "LOGIN", payload: res.user });
+      toast.success(created ? "Welcome to BlowMind!" : "Welcome back!");
 
-                // creating a user document
-                await setDoc(doc(db, "users", res.user.uid), {
-                    photoUrl: res.user.photoURL,
-                    email: res.user.email,
-                    firstName: firstName,
-                    lastName: lastName,
-                    headline: "",
-                    online: true,
-                    interests: [],
-                });
+      if (created || profile.interests.length === 0) {
+        router.push("/interest");
+      } else {
+        router.push("/blog");
+      }
+    } catch (err: unknown) {
+      const appError = getAppError(err);
+      setError(appError.message);
+      // The user closing the popup isn't a failure worth toasting about.
+      if (
+        appError.code !== "auth/popup-closed-by-user" &&
+        appError.code !== "auth/cancelled-popup-request"
+      ) {
+        toast.error(appError.message);
+      }
+    } finally {
+      setIsPending(false);
+    }
+  };
 
-                dispatch({ type: "LOGIN", payload: res.user });
-
-                if(!isCancelled) {
-                    setIsPending(false);
-                    setError(null);
-                    toast.success("Signup successful!")
-                }
-            }
-        } catch (err: any) {
-            if (!isCancelled) {
-                setError(err.message)
-                setIsPending(false);
-                toast.error(`Signup failed: ${err.message}`)
-            }
-        }
-    };
-
-    const googleSignIn = async () => {
-        setError(null);
-        setIsPending(true);
-
-        try {
-            const provider = new GoogleAuthProvider();
-            const res = await signInWithPopup(auth, provider);
-
-            if (!res) {
-                throw new Error("Could not complete sign-in");
-            }
-
-            //update user document
-            await updateDoc(doc(db, "users", res.user.uid), {
-                online: true,
-            });
-
-            dispatch({ type: "LOGIN", payload: res.user });
-
-            if (!isCancelled) {
-                setIsPending(false);
-                setError(null);
-                toast.success("Sign-in successful!")
-            }
-        }catch (err: any) {
-            if (!isCancelled) {
-                setError(err.message);
-                setIsPending(false);
-                toast.error(`Sign-in failed: ${err.message}`);
-            }
-        }
-    };
-
-    useEffect(() => {
-        return () => {
-            setIsCancelled(true);
-        };
-    }, []);
-
-    return { googleSignUp, googleSignIn, error, isPending };
+  return {
+    googleSignUp: signInWithGoogle,
+    googleSignIn: signInWithGoogle,
+    error,
+    isPending,
+  };
 };
 
 export default useGoogle;

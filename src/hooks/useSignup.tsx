@@ -1,121 +1,99 @@
 import { useAuthContext } from "../context/AuthContext";
-import { auth, db, storage } from "../utils/firebaseConfig";
-import { doc, setDoc } from "firebase/firestore";
-import { createUserWithEmailAndPassword, updateProfile, User as FirebaseUser } from "firebase/auth";
+import { auth, storage } from "../utils/firebaseConfig";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { useEffect, useState } from "react"
+import { useState } from "react";
+import { v4 as uuidv4 } from "uuid";
+import { ensureUserProfile, DEFAULT_AVATAR } from "../lib/userService";
+import { getErrorMessage, ValidationError } from "../lib/errors";
 import { Message } from "../Types";
 import { useRouter } from "next/router";
 import { toast } from "react-toastify";
 
+const MAX_AVATAR_BYTES = 5 * 1024 * 1024; // 5 MB
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
 interface UseSignup {
-    signup: (
-        firstName: string,
-        lastName: string,
-        email: string,
-        password: string,
-        thumbnail: File,
-        category: string
-    ) => Promise<void>;
-    message: Message | null | undefined;
-    isPending: boolean;
+  signup: (
+    firstName: string,
+    lastName: string,
+    email: string,
+    password: string,
+    thumbnail: File | null,
+    category: string
+  ) => Promise<void>;
+  message: Message | null;
+  isPending: boolean;
 }
 
-
+function validateAvatar(file: File): void {
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+    throw new ValidationError(
+      "Profile photo must be a JPEG, PNG, WebP, or GIF image."
+    );
+  }
+  if (file.size > MAX_AVATAR_BYTES) {
+    throw new ValidationError("Profile photo must be smaller than 5 MB.");
+  }
+}
 
 const useSignup = (): UseSignup => {
-    const router = useRouter();
-    const [isCancelled, setIsCancelled] = useState(false);
-    const [message, setMessage] = useState<Message | null | undefined>(null);
-    const [isPending, setIsPending] = useState(false);
-    const { dispatch } = useAuthContext();
+  const router = useRouter();
+  const [message, setMessage] = useState<Message | null>(null);
+  const [isPending, setIsPending] = useState(false);
+  const { dispatch } = useAuthContext();
 
+  const signup = async (
+    firstName: string,
+    lastName: string,
+    email: string,
+    password: string,
+    thumbnail: File | null,
+    category: string
+  ) => {
+    setMessage(null);
+    setIsPending(true);
 
-    const signup = async (
-        firstName: string,
-        lastName: string,
-        email: string,
-        password: string,
-        thumbnail: File,
-        category: string
-    ) => {
-        setMessage(null);
-        setIsPending(true);
+    try {
+      if (thumbnail) {
+        validateAvatar(thumbnail);
+      }
 
-        try {
-            //signup users
-            const res = await createUserWithEmailAndPassword(auth,email, password).catch((error) => {
-                console.log("Error Signing Up",error);
-                setIsPending(false);
-                throw error;
-            });
+      const res = await createUserWithEmailAndPassword(auth, email, password);
+      const user = res.user;
 
-            const user = res.user as FirebaseUser;
+      let photoUrl = DEFAULT_AVATAR;
+      if (thumbnail) {
+        // Unique generated path — never trust the user-provided filename.
+        const uploadPath = `thumbnails/${user.uid}/${uuidv4()}`;
+        const storageRef = ref(storage, uploadPath);
+        await uploadBytes(storageRef, thumbnail, {
+          contentType: thumbnail.type,
+        });
+        photoUrl = await getDownloadURL(storageRef);
+      }
 
-            if (!user) {
-                throw new Error("Could not complete signup");
-            }
+      await updateProfile(user, {
+        displayName: `${firstName} ${lastName}`.trim(),
+        photoURL: photoUrl,
+      });
 
-            // uploading user thumbnail
-            const uploadPath = `thumbnails/${user.uid}/${thumbnail.name}`;
-            const storageRef = ref(storage, uploadPath);
-            await uploadBytes(storageRef, thumbnail);
-            const downloadURL = await getDownloadURL(storageRef);
+      await ensureUserProfile(user, { firstName, lastName, photoUrl, category });
 
-            const [profileUpdated, documentSet] = await Promise.allSettled([
-                updateProfile(user,{
-                    displayName: `${firstName} ${lastName}`,
-                    photoURL: downloadURL,
-                }),
-                // creating a user document
-                setDoc(doc(db, "users", user.uid), {
-                    online: true,
-                    firstName,
-                    photoUrl: downloadURL,
-                    interests: [],
-                    email,
-                    lastName,
-                    headline: "",
-                    category,
-                }),
-            ]);
+      dispatch({ type: "LOGIN", payload: user });
+      toast.success("Signup successful!");
+      setMessage({ type: "Success", message: "Sign up successful" });
+      router.push("/interest");
+    } catch (error: unknown) {
+      const friendly = getErrorMessage(error);
+      toast.error(friendly);
+      setMessage({ type: "Error", message: friendly });
+    } finally {
+      setIsPending(false);
+    }
+  };
 
-            if (profileUpdated.status === "rejected"){
-                toast.error("Profile update failed:", profileUpdated.reason);
-            }
-
-            if (documentSet.status === "rejected") {
-                toast.error("Document creation failed:", documentSet.reason);
-            }
-
-
-            dispatch({ type: "LOGIN", payload: user });
-            toast.success("Signup successful!");
-
-           setIsPending(false);
-           setMessage({ type: "Success", message: "Sign up successful" });
-           router.push("/interest");
-        }  catch (error: any) {
-           if (!isCancelled) {
-            toast.error("Signup error:",error);
-            let errorMessage: string = "";
-            if (error.code === "auth/email-already-in-use") {
-                errorMessage = "Email Already Exists please register with a different email";
-            }
-            setMessage({ type: "Error", message: errorMessage });
-            setIsPending(false)
-           }
-        }
-    };
-
-    useEffect(() => {
-        return () => {
-            setIsCancelled(true);
-        };
-    }, []);
-
-    return { signup, message, isPending };
+  return { signup, message, isPending };
 };
 
 export default useSignup;

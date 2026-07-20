@@ -4,6 +4,8 @@ import { collection, doc, addDoc, deleteDoc, updateDoc } from "firebase/firestor
 import { useEffect, useReducer, useState } from "react";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
 import { toast } from "react-toastify";
+import { v4 as uuidv4 } from "uuid";
+import { getErrorMessage } from "../lib/errors";
 
 
 
@@ -67,25 +69,22 @@ export const useFirestore = (collectionName: string) => {
             let downloadURL = "";
 
             if (image) {
-                try {
-                    const uploadPath = `images/${user?.uid}_${Date.now()}_${image.name}`;
-                    const imageRef = ref(storage,uploadPath);
-                    await uploadBytes(imageRef, image);
-                    downloadURL = await getDownloadURL(imageRef);
-                } catch (uploadError: any) {
-                    console.error("Image upload error", uploadError);
-                    throw new Error("Failed to upload the image. Please try again");
-                }
+                // Unique generated path — never trust the user-provided filename.
+                const uploadPath = `images/${user?.uid}/${uuidv4()}`;
+                const imageRef = ref(storage, uploadPath);
+                await uploadBytes(imageRef, image, { contentType: image.type });
+                downloadURL = await getDownloadURL(imageRef);
             }
 
             const addedDocument = await addDoc(colRef, { ...doc, createdAt, imageURL: downloadURL,  userId: user?.uid, });
             dispatchIfNotCancelled({ type: "ADDED_DOCUMENT", payload: addedDocument });
-            toast.success("Document added successfully!")
+            toast.success("Saved successfully!")
 
             return addedDocument.id;
-        } catch (err:any) {
-            dispatchIfNotCancelled({ type:"ERROR", payload: err.message });
-            toast.error(`Error adding document: ${err.message}`);
+        } catch (err: unknown) {
+            const friendly = getErrorMessage(err);
+            dispatchIfNotCancelled({ type:"ERROR", payload: friendly });
+            toast.error(friendly);
         }
     };
 
@@ -95,10 +94,11 @@ export const useFirestore = (collectionName: string) => {
             const docRef = doc(db, collectionName, id);
             await deleteDoc(docRef);
             dispatchIfNotCancelled({ type: "DELETED_DOCUMENT" });
-            toast.success("Document deleted successfully!");
-        } catch (err: any) {
-            dispatchIfNotCancelled({ type: "ERROR", payload: "Could not delete" });
-            toast.error(`Error deleting document: ${err.message}`);
+            toast.success("Deleted successfully!");
+        } catch (err: unknown) {
+            const friendly = getErrorMessage(err);
+            dispatchIfNotCancelled({ type: "ERROR", payload: friendly });
+            toast.error(friendly);
         }
     };
 
@@ -106,24 +106,26 @@ export const useFirestore = (collectionName: string) => {
         dispatch({ type: "IS_PENDING" });
         try {
             if (image) {
-                    const uploadPath = `images/${user?.uid}_${Date.now()}_${image.name}`;
-                    const imageRef = ref(storage,uploadPath);
-                    await uploadBytes(imageRef, image);
+                    // Unique generated path — never trust the user-provided filename.
+                    const uploadPath = `images/${user?.uid}/${uuidv4()}`;
+                    const imageRef = ref(storage, uploadPath);
+                    await uploadBytes(imageRef, image, { contentType: image.type });
                     const downloadURL = await getDownloadURL(imageRef);
                     updates.imageURL = downloadURL;
                 }
 
-                updates.userId = user?.uid;
+                // Ownership (userId) is set once at creation and must never
+                // be rewritten on update.
 
                 const docRef = doc(db, collectionName, id);
                 await updateDoc(docRef,updates);
                 dispatchIfNotCancelled({ type: "UPDATED_DOCUMENT", payload: updates });
-                toast.success("Document updated successfully!")
+                toast.success("Updated successfully!")
                 return updates;
-            } catch (err: any) {
-                dispatchIfNotCancelled({ type: "ERROR", payload: err.message });
-                console.error("Firestore update error:", err)
-                toast.error(`Error updating document: ${err.message}`);
+            } catch (err: unknown) {
+                const friendly = getErrorMessage(err);
+                dispatchIfNotCancelled({ type: "ERROR", payload: friendly });
+                toast.error(friendly);
                 return null;
             }
     };
