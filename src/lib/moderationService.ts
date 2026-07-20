@@ -1,6 +1,17 @@
 import { db } from "../utils/firebaseConfig";
 import { User as FirebaseUser } from "firebase/auth";
-import { doc, serverTimestamp, setDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  serverTimestamp,
+  updateDoc,
+  where,
+  setDoc,
+} from "firebase/firestore";
 
 /**
  * Community-safety writes. Reports are soft signals: creating a report
@@ -57,5 +68,65 @@ export async function reportContent(params: {
     details: (details ?? "").slice(0, 1000),
     status: "open",
     createdAt: serverTimestamp(),
+  });
+}
+
+// ---------------------------------------------------------------------
+// Moderator-only operations (also enforced by security rules + claims)
+// ---------------------------------------------------------------------
+
+export interface Report {
+  id: string;
+  reporterUid: string;
+  targetType: ReportTargetType;
+  targetId: string;
+  postId: string;
+  reason: ReportReason;
+  details?: string;
+  status: "open" | "resolved" | "dismissed";
+  createdAt?: { seconds: number };
+}
+
+/** Fetch the newest open reports for the moderation queue. */
+export async function fetchOpenReports(max = 50): Promise<Report[]> {
+  const snapshot = await getDocs(
+    query(
+      collection(db, "reports"),
+      where("status", "==", "open"),
+      orderBy("createdAt", "desc"),
+      limit(max)
+    )
+  );
+  return snapshot.docs.map((d) => ({
+    ...(d.data() as Omit<Report, "id">),
+    id: d.id,
+  }));
+}
+
+/** Triage a report: mark resolved or dismissed. */
+export async function resolveReport(
+  reportId: string,
+  moderatorUid: string,
+  status: "resolved" | "dismissed",
+  resolution?: string
+): Promise<void> {
+  await updateDoc(doc(db, "reports", reportId), {
+    status,
+    resolution: resolution ?? status,
+    resolvedAt: serverTimestamp(),
+    resolvedBy: moderatorUid,
+  });
+}
+
+/** Soft-remove or restore a post (hides it from the public via rules). */
+export async function setPostModeration(
+  postId: string,
+  moderatorUid: string,
+  status: "removed" | "ok"
+): Promise<void> {
+  await updateDoc(doc(db, "posts", postId), {
+    moderationStatus: status,
+    moderatedAt: serverTimestamp(),
+    moderatedBy: moderatorUid,
   });
 }

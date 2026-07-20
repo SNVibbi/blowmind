@@ -34,12 +34,29 @@ await admin.auth().setCustomUserClaims(uid, { moderator: true });
 Rules verified by tests: normal users cannot set `moderationStatus`, read
 others' reports, or triage reports; moderators can do all three.
 
+## Moderator dashboard
+
+Moderators get a queue at **`/moderation`** (link appears in the navbar
+only for users with the claim). It lists open reports newest-first and
+offers two actions per report:
+
+- **Remove post** — soft-removes the post (`moderationStatus: "removed"`)
+  and resolves the report. Removed posts are hidden from the public by
+  rules but stay visible to the owner and moderators.
+- **Dismiss report** — marks the report dismissed, leaving the post up.
+
+The page is gated by `withModerator` (reads the custom claim via
+`useRole`), but that's convenience only — every action is independently
+enforced by `firestore.rules`, so a non-moderator who forces their way to
+the page just gets permission-denied.
+
 ## Not yet built (roadmap)
 
-- Moderator review-queue UI (data model + rules are ready).
 - Block/mute between users.
-- Rate limiting and spam heuristics (need Cloud Functions).
-- Suspension/appeal workflow and moderator audit log.
+- Rate limiting and spam heuristics (Cloud Functions foundation now
+  exists — see functions/).
+- Suspension/appeal workflow and a dedicated moderator audit log
+  (moderatedBy/resolvedBy are already recorded on the documents).
 
 ## Principle
 
