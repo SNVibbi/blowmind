@@ -79,6 +79,16 @@ server actions. All Firestore/Storage access happens from the browser, so
 - Missing product basics: password reset, email verification, search that
   isn't client-side filtering, notifications, moderation/reporting.
 
+## Git workflow (authorized by the owner, 2026-07-20)
+
+- Each stage is developed on a branch named `stage-N-short-name`.
+- When the stage's checks pass (lint, typecheck, tests, rule tests,
+  build), merge the branch into `master` and push both to `origin`.
+- Pushing stage work and merging to master is pre-authorized; do NOT
+  wait for a prompt. Production actions (Firebase rule deploys, data
+  migrations against the live project, Vercel/domain changes) remain
+  owner-only.
+
 ## Stage plan
 
 Work strictly in order. Do not start a stage while the previous one has
