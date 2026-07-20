@@ -1,5 +1,5 @@
 import React from "react";
-import Landing from "../pages/Landing";
+import Landing from "../components/Landing";
 import { AuthContextProvider } from "../context/AuthContext";
 import { ThemeProvider } from "../context/ThemeContext";
 

@@ -1,13 +1,13 @@
 import BlogNavbar from "@/components/BlogNavbar";
-import Aside from "../../components/Aside";
-import Interest from "../interest";
-import PostList from "../../components/PostList";
-import { useAuthContext } from "../../context/AuthContext";
-import { useCollection } from "../../hooks/useCollection";
-import { Post, User } from "../../Types";
+import Aside from "./Aside";
+import Interest from "../pages/interest";
+import PostList from "./PostList";
+import { useAuthContext } from "../context/AuthContext";
+import { useDocument } from "../hooks/useDocument";
+import { usePaginatedPosts } from "../hooks/usePaginatedPosts";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
-import Footer from "../../components/Footer";
+import Footer from "./Footer";
 import Searchbar from "@/components/Searchbar";
 
 type swProps = {
@@ -17,10 +17,12 @@ type swProps = {
 const Home: React.FC<swProps> = ({ sw }) => {
     const { user } = useAuthContext();
     const router = useRouter();
-    const { documents: posts, error: postError, isPending: postPending } = useCollection<Post>("posts");
-    const { documents: users } = useCollection<User>("users");
+    const { posts, error: postError, isPending: postPending, hasMore, loadMore } = usePaginatedPosts();
 
-    const currentUser = users?.find((u: any) => u.id === user?.uid);
+    const { document: currentUser } = useDocument<{ interests: string[] }>(
+        "users",
+        user?.uid
+    );
 
     const [mobileMenu, setMobileMenu] = useState(false);
 
@@ -30,8 +32,8 @@ const Home: React.FC<swProps> = ({ sw }) => {
         }
     }, [user, router]);
 
-    if (postError) return <div className="text-red-500">{postError}</div>;
-    if (postPending) return <div className="text-center mt-4">Loading...</div>;
+    if (postError) return <div className="text-red-500" role="alert">{postError}</div>;
+    if (postPending && !posts) return <div className="text-center mt-4" role="status">Loading…</div>;
 
     return (
         <>
@@ -39,7 +41,7 @@ const Home: React.FC<swProps> = ({ sw }) => {
             <BlogNavbar screenWidth={sw} mobileMenu={mobileMenu} setMobileMenu={setMobileMenu} />
             <Searchbar setMobileMenu={setMobileMenu}/>
             <div className={`flex-1 p-4 ${sw > 1050 ? 'lg:flex lg:flex-col lg:space-x-4' : 'flex flex-row space-y-4'} mb-4`}>
-                {currentUser && currentUser.interests.length === 0 && <Interest />}
+                {currentUser && (currentUser.interests ?? []).length === 0 && <Interest />}
                 {posts && (
                     <>
                         <div className="flex-1">
@@ -69,6 +71,17 @@ const Home: React.FC<swProps> = ({ sw }) => {
                                 </li>
                             </ul>
                             <PostList posts={posts} msg="No posts yet!" />
+                            {hasMore && (
+                                <div className="text-center mt-6">
+                                    <button
+                                        onClick={loadMore}
+                                        disabled={postPending}
+                                        className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 px-6 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
+                                    >
+                                        {postPending ? "Loading…" : "Load more posts"}
+                                    </button>
+                                </div>
+                            )}
                         </div>
                         {sw > 1050 && <Aside />}
                     </>

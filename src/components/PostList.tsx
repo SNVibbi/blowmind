@@ -101,14 +101,14 @@ const PostList: React.FC<PostListProps> = ({ posts, msg }) => {
                             />
                             {post.imageURL && (
                                 <div className="mt-4">
-                                    <Image 
-                                    src={post.imageURL} 
-                                    alt="Post Content" 
-                                    className="mt-2 rounded-lg w-full object-cover"
+                                    <Image
+                                    src={post.imageURL}
+                                    alt={`Image for post: ${post.title}`}
+                                    className="mt-2 rounded-lg w-full h-auto object-cover"
                                     width={800}
                                     height={400}
-                                    layout="responsive"
-                                    priority 
+                                    sizes="(max-width: 768px) 100vw, 800px"
+                                    priority={index === 0}
                                 />
                                 </div>
                             )}

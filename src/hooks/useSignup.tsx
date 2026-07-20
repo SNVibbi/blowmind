@@ -9,6 +9,7 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { ensureUserProfile, DEFAULT_AVATAR } from "../lib/userService";
+import { compressAvatar } from "../lib/imageUtils";
 import { getErrorMessage, ValidationError } from "../lib/errors";
 import { Message } from "../Types";
 import { useRouter } from "next/router";
@@ -68,11 +69,12 @@ const useSignup = (): UseSignup => {
 
       let photoUrl = DEFAULT_AVATAR;
       if (thumbnail) {
+        const compressed = await compressAvatar(thumbnail);
         // Unique generated path — never trust the user-provided filename.
         const uploadPath = `thumbnails/${user.uid}/${uuidv4()}`;
         const storageRef = ref(storage, uploadPath);
-        await uploadBytes(storageRef, thumbnail, {
-          contentType: thumbnail.type,
+        await uploadBytes(storageRef, compressed, {
+          contentType: compressed.type,
         });
         photoUrl = await getDownloadURL(storageRef);
       }

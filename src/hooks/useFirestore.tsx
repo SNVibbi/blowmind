@@ -6,6 +6,7 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
 import { toast } from "react-toastify";
 import { v4 as uuidv4 } from "uuid";
 import { getErrorMessage } from "../lib/errors";
+import { compressImage } from "../lib/imageUtils";
 
 
 
@@ -69,10 +70,11 @@ export const useFirestore = (collectionName: string) => {
             let downloadURL = "";
 
             if (image) {
+                const compressed = await compressImage(image);
                 // Unique generated path — never trust the user-provided filename.
                 const uploadPath = `images/${user?.uid}/${uuidv4()}`;
                 const imageRef = ref(storage, uploadPath);
-                await uploadBytes(imageRef, image, { contentType: image.type });
+                await uploadBytes(imageRef, compressed, { contentType: compressed.type });
                 downloadURL = await getDownloadURL(imageRef);
             }
 
@@ -106,10 +108,11 @@ export const useFirestore = (collectionName: string) => {
         dispatch({ type: "IS_PENDING" });
         try {
             if (image) {
+                    const compressed = await compressImage(image);
                     // Unique generated path — never trust the user-provided filename.
                     const uploadPath = `images/${user?.uid}/${uuidv4()}`;
                     const imageRef = ref(storage, uploadPath);
-                    await uploadBytes(imageRef, image, { contentType: image.type });
+                    await uploadBytes(imageRef, compressed, { contentType: compressed.type });
                     const downloadURL = await getDownloadURL(imageRef);
                     updates.imageURL = downloadURL;
                 }
