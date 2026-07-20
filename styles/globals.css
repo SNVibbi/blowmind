@@ -5,23 +5,90 @@
 /* Import Flowbite */
 @import 'flowbite';
 
-
-
-/* Custom styles */
+/* ------------------------------------------------------------------ */
+/* Design tokens                                                       */
+/* ------------------------------------------------------------------ */
 :root {
-  --primary-color: #4f46e5; /* Indigo */
-  --secondary-color: #06b6d4; /* Cyan */
-  --accent-color: #f97316; /* Coral */
-  --background-color: #f3f4f6; /* Light Gray */
-  --text-color: #374151; /* Dark Gray */
+  --brand-50: #eef2ff;
+  --brand-100: #e0e7ff;
+  --brand-500: #6366f1;
+  --brand-600: #4f46e5;
+  --brand-700: #4338ca;
+  --accent-500: #06b6d4;
+
+  --bg: #f3f4f6;
+  --surface: #ffffff;
+  --text: #1f2937;
+  --text-muted: #6b7280;
+  --border: #e5e7eb;
 }
 
-/* Dark mode styles */
 .dark {
-  --primary-color: #1a202c; /* Example dark mode primary color */
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --text: #e5e7eb;
+  --text-muted: #94a3b8;
+  --border: #334155;
 }
 
+/* ------------------------------------------------------------------ */
+/* Base                                                                */
+/* ------------------------------------------------------------------ */
 body {
-  background-color: var(--background-color);
-  color: var(--text-color);
+  background-color: var(--bg);
+  color: var(--text);
+}
+
+/* Smooth, subtle theme transition on the big surfaces. */
+body,
+.bg-white,
+.dark .dark\:bg-gray-800,
+.dark .dark\:bg-gray-900 {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Visible keyboard focus everywhere (mouse clicks stay clean). */
+:focus-visible {
+  outline: 2px solid var(--brand-600);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Nicer selection color. */
+::selection {
+  background: var(--brand-100);
+  color: var(--brand-700);
+}
+
+/* Respect users who prefer less motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Reusable component classes                                          */
+/* ------------------------------------------------------------------ */
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply btn bg-brand-600 text-white hover:bg-brand-700;
+  }
+  .btn-secondary {
+    @apply btn border border-gray-300 text-gray-800 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700;
+  }
+  .card {
+    @apply rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-100 transition-shadow hover:shadow-md dark:bg-gray-800 dark:ring-gray-700;
+  }
+  .input-field {
+    @apply w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:text-gray-200;
+  }
 }

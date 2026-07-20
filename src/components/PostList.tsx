@@ -54,7 +54,7 @@ const PostList: React.FC<PostListProps> = ({ posts, msg }) => {
     return (
         <div className="space-y-6 max-w-6xl mx-auto px-4 mt-1">
             {posts?.length === 0 && (
-                <EmptyState icon="feather-pointed" title="Nothing here yet" message={msg} />
+                <EmptyState image="/img/empty-posts.svg" title="Nothing here yet" message={msg} />
             )}
             {posts?.map((post, index) => (
                 <div 
