@@ -1,79 +1,53 @@
-import { toast } from 'react-toastify';
-import { useAuthContext } from '../context/AuthContext';
-import { useFirestore } from '../hooks/useFirestore';
-import { BookmarkedItem, BookmarkIconProps, BookmarkProps, BookmarkToAdd } from '../Types';
-import '@fortawesome/fontawesome-free/css/all.min.css'
-import { v4 as uuidv4 } from "uuid";
+import { toast } from "react-toastify";
+import { useAuthContext } from "../context/AuthContext";
+import { useBookmarkStatus } from "../hooks/useInteractions";
+import { toggleBookmark } from "../lib/postService";
+import { getErrorMessage } from "../lib/errors";
+import { BookmarkIconProps } from "../Types";
+import { useState } from "react";
+import "@fortawesome/fontawesome-free/css/all.min.css";
 
+export default function BookmarkIcon({ post }: BookmarkIconProps) {
+  const { user } = useAuthContext();
+  const bookmarked = useBookmarkStatus(post.id, user?.uid);
+  const [isPending, setIsPending] = useState(false);
 
+  const handleClick = async () => {
+    if (!user) {
+      toast.info("Log in to bookmark posts.");
+      return;
+    }
+    if (isPending) return;
 
-export default function BookmarkIcon ({ post }: BookmarkIconProps) {
-    const { addDocument, response: addResponse } = useFirestore("bookmarks");
-    const { updateDocument, response: updateResponse } = useFirestore("posts");
-    const { user } = useAuthContext();
+    setIsPending(true);
+    try {
+      const nowBookmarked = await toggleBookmark(post.id, user.uid, bookmarked);
+      toast.success(
+        nowBookmarked ? "Added to your bookmarks." : "Removed from your bookmarks."
+      );
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setIsPending(false);
+    }
+  };
 
-
-    const author = {
-        firstName: post.author?.firstName || "",
-        lastName: post.author?.lastName || "",
-        photoURL: post.author?.photoURL || "",
-        id: post.author?.id || "",
-        headline: post.author?.headline || "",
-    };
-
-    const bookmarkToAdd: BookmarkToAdd = {
-        userId: user?.uid!,
-        id: uuidv4(),
-        postId: post.id,
-    };
-
-
-    const bookmark: BookmarkProps = {
-        userId: user?.uid!,
-        postId: post.id,
-        author,
-        title: post.title,
-        content: post.content,
-        imageURL: post.imageURL,
-        comments: post.comments,
-        likes: post.likes,
-        share: post.share,
-        views: post.views,
-        bookmarks: post.bookmarks,
-    };
-
-    const bookmarked: BookmarkedItem[] = post.bookmarks.filter((bookmark: BookmarkedItem) => bookmark.userId === user?.uid);
-
-        const handleClick = async () => {
-            if (bookmarked.length) {
-                toast.success("Post already bookmarked by you");
-                return;
-            } 
-
-            await addDocument(bookmark);
-            if (!addResponse.error) {
-                    console.log("Post added to bookmark collection");
-
-                await updateDocument(post.id, {
-                    bookmarks: [...post.bookmarks, bookmarkToAdd],
-                });
-
-                if (!updateResponse.error) {
-                    console.log("Post added to post collection")
-                }
-            }
-
-         };
-
-            return (
-                <button className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700" onClick={handleClick}>
-                    {bookmarked.length ? (
-                        <i className="fas fa-bookmark text-indigo-600"></i>
-                    ) : (
-                        <i className="far fa-bookmark text-gray-600 dark:text-gray-400"></i>
-                    )}
-                </button>
-            );
-        };
-
-       
+  return (
+    <button
+      className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50"
+      onClick={handleClick}
+      disabled={isPending}
+      aria-pressed={bookmarked}
+      aria-label={bookmarked ? "Remove bookmark" : "Bookmark this post"}
+    >
+      {bookmarked ? (
+        <i className="fas fa-bookmark text-indigo-600" aria-hidden="true"></i>
+      ) : (
+        <i
+          className="far fa-bookmark text-gray-600 dark:text-gray-400"
+          aria-hidden="true"
+        ></i>
+      )}
+    </button>
+  );
+}

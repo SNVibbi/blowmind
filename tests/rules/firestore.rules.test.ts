@@ -7,7 +7,14 @@ import {
 } from "@firebase/rules-unit-testing";
 import { readFileSync } from "fs";
 import { resolve } from "path";
-import { doc, getDoc, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  increment,
+} from "firebase/firestore";
 
 let testEnv: RulesTestEnvironment;
 
@@ -21,12 +28,12 @@ const alicePost = {
   userId: ALICE,
   author: { firstName: "Alice", lastName: "A", photoURL: "", id: ALICE, headline: "" },
   createdAt: new Date(),
-  comments: [],
-  likes: [],
-  bookmarks: [],
-  views: [],
   tags: ["tech"],
   share: "",
+  commentCount: 0,
+  likeCount: 0,
+  bookmarkCount: 0,
+  viewCount: 0,
   expands: 0,
 };
 
@@ -160,6 +167,12 @@ describe("posts collection", () => {
     );
   });
 
+  it("denies creating a post with pre-inflated counters", async () => {
+    await assertFails(
+      setDoc(doc(db(ALICE), "posts", "p3b"), { ...alicePost, likeCount: 9999 })
+    );
+  });
+
   it("denies unauthenticated post creation", async () => {
     await assertFails(setDoc(doc(db(null), "posts", "p4"), alicePost));
   });
@@ -193,11 +206,20 @@ describe("posts collection", () => {
     );
   });
 
-  it("allows another user to update only interaction fields (legacy model)", async () => {
+  it("allows another user to bump interaction counters", async () => {
     await seedAlicePost();
     await assertSucceeds(
       updateDoc(doc(db(BOB), "posts", "post1"), {
-        likes: [{ uid: BOB, displayName: "Bob", photoURL: "", id: 1 }],
+        likeCount: increment(1),
+      })
+    );
+  });
+
+  it("denies another user writing legacy interaction arrays", async () => {
+    await seedAlicePost();
+    await assertFails(
+      updateDoc(doc(db(BOB), "posts", "post1"), {
+        likes: [{ uid: BOB }],
       })
     );
   });
@@ -209,12 +231,12 @@ describe("posts collection", () => {
     );
   });
 
-  it("denies another user editing title even alongside interaction fields", async () => {
+  it("denies another user editing title even alongside counters", async () => {
     await seedAlicePost();
     await assertFails(
       updateDoc(doc(db(BOB), "posts", "post1"), {
         title: "defaced",
-        likes: [],
+        likeCount: increment(1),
       })
     );
   });
@@ -230,36 +252,246 @@ describe("posts collection", () => {
   });
 });
 
-describe("bookmarks collection", () => {
-  it("allows creating a bookmark for yourself", async () => {
+describe("comments subcollection", () => {
+  beforeEach(async () => {
+    await seedAlicePost();
+  });
+
+  it("allows anyone to read comments", async () => {
     await assertSucceeds(
-      setDoc(doc(db(BOB), "bookmarks", "b1"), {
+      getDoc(doc(db(null), "posts", "post1", "comments", "c1"))
+    );
+  });
+
+  it("allows a signed-in user to comment as themselves", async () => {
+    await assertSucceeds(
+      setDoc(doc(db(BOB), "posts", "post1", "comments", "c1"), {
+        userId: BOB,
+        displayName: "Bob",
+        photoURL: "",
+        content: "Nice post!",
+        createdAt: new Date(),
+      })
+    );
+  });
+
+  it("denies commenting as someone else", async () => {
+    await assertFails(
+      setDoc(doc(db(BOB), "posts", "post1", "comments", "c2"), {
+        userId: ALICE,
+        displayName: "Alice",
+        photoURL: "",
+        content: "impersonated",
+        createdAt: new Date(),
+      })
+    );
+  });
+
+  it("denies comments over 2000 characters", async () => {
+    await assertFails(
+      setDoc(doc(db(BOB), "posts", "post1", "comments", "c3"), {
+        userId: BOB,
+        displayName: "Bob",
+        photoURL: "",
+        content: "x".repeat(2001),
+        createdAt: new Date(),
+      })
+    );
+  });
+
+  it("denies editing a comment (immutable)", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "posts", "post1", "comments", "c4"), {
+        userId: BOB,
+        displayName: "Bob",
+        photoURL: "",
+        content: "original",
+        createdAt: new Date(),
+      });
+    });
+    await assertFails(
+      updateDoc(doc(db(BOB), "posts", "post1", "comments", "c4"), {
+        content: "edited",
+      })
+    );
+  });
+
+  it("allows the author to delete their own comment", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "posts", "post1", "comments", "c5"), {
+        userId: BOB,
+        displayName: "Bob",
+        photoURL: "",
+        content: "to delete",
+        createdAt: new Date(),
+      });
+    });
+    await assertSucceeds(
+      deleteDoc(doc(db(BOB), "posts", "post1", "comments", "c5"))
+    );
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "posts", "post1", "comments", "c6"), {
+        userId: BOB,
+        displayName: "Bob",
+        photoURL: "",
+        content: "not yours",
+        createdAt: new Date(),
+      });
+    });
+    await assertFails(
+      deleteDoc(doc(db(ALICE), "posts", "post1", "comments", "c6"))
+    );
+  });
+});
+
+describe("likes subcollection", () => {
+  beforeEach(async () => {
+    await seedAlicePost();
+  });
+
+  it("allows liking under your own uid", async () => {
+    await assertSucceeds(
+      setDoc(doc(db(BOB), "posts", "post1", "likes", BOB), {
+        uid: BOB,
+        displayName: "Bob",
+        photoURL: "",
+        createdAt: new Date(),
+      })
+    );
+  });
+
+  it("denies liking under someone else's uid", async () => {
+    await assertFails(
+      setDoc(doc(db(BOB), "posts", "post1", "likes", ALICE), {
+        uid: ALICE,
+        displayName: "Alice",
+        photoURL: "",
+        createdAt: new Date(),
+      })
+    );
+  });
+
+  it("denies a like doc whose uid field mismatches its ID", async () => {
+    await assertFails(
+      setDoc(doc(db(BOB), "posts", "post1", "likes", BOB), {
+        uid: ALICE,
+        displayName: "Bob",
+        photoURL: "",
+        createdAt: new Date(),
+      })
+    );
+  });
+
+  it("allows unliking (deleting your own like)", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "posts", "post1", "likes", BOB), {
+        uid: BOB,
+        displayName: "Bob",
+        photoURL: "",
+        createdAt: new Date(),
+      });
+    });
+    await assertSucceeds(deleteDoc(doc(db(BOB), "posts", "post1", "likes", BOB)));
+  });
+
+  it("denies deleting someone else's like", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "posts", "post1", "likes", BOB), {
+        uid: BOB,
+        displayName: "Bob",
+        photoURL: "",
+        createdAt: new Date(),
+      });
+    });
+    await assertFails(deleteDoc(doc(db(ALICE), "posts", "post1", "likes", BOB)));
+  });
+});
+
+describe("views subcollection", () => {
+  beforeEach(async () => {
+    await seedAlicePost();
+  });
+
+  it("allows recording your own view once", async () => {
+    await assertSucceeds(
+      setDoc(doc(db(BOB), "posts", "post1", "views", BOB), {
+        uid: BOB,
+        createdAt: new Date(),
+      })
+    );
+  });
+
+  it("denies recording a view for someone else", async () => {
+    await assertFails(
+      setDoc(doc(db(BOB), "posts", "post1", "views", ALICE), {
+        uid: ALICE,
+        createdAt: new Date(),
+      })
+    );
+  });
+
+  it("denies deleting views (write-once)", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "posts", "post1", "views", BOB), {
+        uid: BOB,
+        createdAt: new Date(),
+      });
+    });
+    await assertFails(deleteDoc(doc(db(BOB), "posts", "post1", "views", BOB)));
+  });
+});
+
+describe("bookmarks collection", () => {
+  it("allows creating a bookmark for yourself with the ID convention", async () => {
+    await assertSucceeds(
+      setDoc(doc(db(BOB), "bookmarks", `${BOB}_post1`), {
         userId: BOB,
         postId: "post1",
-        id: "b1",
+        createdAt: new Date(),
       })
     );
   });
 
   it("denies creating a bookmark as someone else", async () => {
     await assertFails(
-      setDoc(doc(db(BOB), "bookmarks", "b2"), {
+      setDoc(doc(db(BOB), "bookmarks", `${ALICE}_post1`), {
         userId: ALICE,
         postId: "post1",
-        id: "b2",
+        createdAt: new Date(),
       })
     );
   });
 
-  it("denies deleting another user's bookmark", async () => {
+  it("denies a bookmark whose ID breaks the uid_postId convention", async () => {
+    await assertFails(
+      setDoc(doc(db(BOB), "bookmarks", "random-id"), {
+        userId: BOB,
+        postId: "post1",
+        createdAt: new Date(),
+      })
+    );
+  });
+
+  it("denies reading another user's bookmarks", async () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
-      await setDoc(doc(ctx.firestore(), "bookmarks", "b3"), {
+      await setDoc(doc(ctx.firestore(), "bookmarks", `${ALICE}_post1`), {
         userId: ALICE,
         postId: "post1",
-        id: "b3",
+        createdAt: new Date(),
       });
     });
-    await assertFails(deleteDoc(doc(db(BOB), "bookmarks", "b3")));
+    await assertFails(getDoc(doc(db(BOB), "bookmarks", `${ALICE}_post1`)));
+  });
+
+  it("denies deleting another user's bookmark", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "bookmarks", `${ALICE}_post1`), {
+        userId: ALICE,
+        postId: "post1",
+        createdAt: new Date(),
+      });
+    });
+    await assertFails(deleteDoc(doc(db(BOB), "bookmarks", `${ALICE}_post1`)));
   });
 });
 

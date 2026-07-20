@@ -1,28 +1,26 @@
-import { Post } from "../../Types";
 import withAuth from "../../hoc/withAuth";
 import PostList from "../../components/PostList";
 import CustomSkeleton from "../../components/CustomSkeleton";
 import { useAuthContext } from "../../context/AuthContext";
-import { useCollection } from "../../hooks/useCollection";
-
-
+import { useBookmarkedPosts } from "../../hooks/useBookmarkedPosts";
 
 function Bookmarks(): JSX.Element {
-    const { user }: any = useAuthContext();
-    const { documents: bookmarks, isPending, error } = useCollection<Post>("bookmarks", ["id", "==", user?.uid]);
+  const { user } = useAuthContext();
+  const { posts, error } = useBookmarkedPosts(user?.uid);
 
-    return (
-        <div className="p-4 bg-gray-50 dark:bg-gray-900 min-h-screen">
-            {isPending && <CustomSkeleton count={5} />}
-            {error && <div className="text-red-600">{error}</div>}
-            {bookmarks && (
-                <PostList 
-                    posts={bookmarks}
-                    msg="Posts you put bookmark will appear here..." 
-                />
-            )}
+  return (
+    <div className="p-4 bg-gray-50 dark:bg-gray-900 min-h-screen">
+      {!posts && !error && <CustomSkeleton count={5} />}
+      {error && (
+        <div className="text-red-600" role="alert">
+          {error}
         </div>
-    )
+      )}
+      {posts && (
+        <PostList posts={posts} msg="Posts you bookmark will appear here…" />
+      )}
+    </div>
+  );
 }
 
 export default withAuth(Bookmarks);

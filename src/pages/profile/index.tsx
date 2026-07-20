@@ -3,6 +3,7 @@ import withAuth from "../../hoc/withAuth";
 import PostList from "../../components/PostList";
 import { useAuthContext } from "../../context/AuthContext";
 import { useCollection } from "../../hooks/useCollection";
+import { useBookmarkedPosts } from "../../hooks/useBookmarkedPosts";
 import { useDocument } from "../../hooks/useDocument";
 import useTheme from "../../hooks/useTheme";
 import { Post } from "../../Types";
@@ -37,10 +38,7 @@ const Profile: React.FC<ProfileProps> = () => {
             userId ? ["author.id","==",userId] : null
         );
 
-    const { documents: bookmarks } = useCollection<Post>(
-        "bookmarks", 
-        userId ? ["userId","==",userId] : null
-    );
+    const { posts: bookmarks } = useBookmarkedPosts(userId);
 
     if (error) {
         return <div className="text-red-600">{error}</div>;
