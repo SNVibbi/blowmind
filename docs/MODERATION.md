@@ -94,10 +94,20 @@ Note: audit entries are written client-side by authenticated moderators
 into Cloud Functions; the current model records who did what and is
 adequate for a trusted moderator team.
 
+## Timed suspensions
+
+Suspensions can carry a `suspendedUntil` expiry. The rules treat a
+suspension whose expiry has passed as **inactive**, so a user regains
+access exactly at expiry — even before cleanup runs. The
+`liftExpiredSuspensions` scheduled Cloud Function (hourly) then clears the
+flag so records and the banner stay tidy (needs a composite
+`users(suspended, suspendedUntil)` index — in `firestore.indexes.json`).
+The dashboard's "Remove & suspend author" applies a 7-day suspension by
+default; `setSuspension(..., durationDays)` supports any duration, and
+`durationDays = 0` means permanent.
+
 ## Not yet built (roadmap)
 
-- Timed/auto-expiring suspensions (currently a moderator lifts them, or
-  a granted appeal does); would need a scheduled Cloud Function.
 - Spam heuristics beyond the rate limits in `functions/`.
 
 ## Principle

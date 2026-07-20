@@ -40,13 +40,20 @@ service cloud.firestore {
     }
 
     // A suspended user (flag set on their profile by a moderator) is
-    // blocked from creating content. One get() per create — creates are
-    // far rarer than reads, so the cost is acceptable.
+    // blocked from creating content. A suspension with a `suspendedUntil`
+    // in the past is treated as expired (inactive) even before the
+    // scheduled cleanup lifts the flag. One get() per create — creates
+    // are far rarer than reads, so the cost is acceptable (rules cache
+    // repeated get()s to the same doc within one evaluation).
+    function suspensionData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
     function isSuspended() {
       return isSignedIn()
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
-        && get(/databases/$(database)/documents/users/$(request.auth.uid))
-             .data.get('suspended', false) == true;
+        && suspensionData().get('suspended', false) == true
+        && (suspensionData().get('suspendedUntil', null) == null
+            || suspensionData().suspendedUntil > request.time);
     }
 
     // ------------------------------------------------------------------
@@ -85,7 +92,8 @@ service cloud.firestore {
           && request.resource.data.get('headline', '').size() <= 200)
         || (isModerator()
           && affectedKeys().hasOnly([
-            'suspended', 'suspendedReason', 'suspendedBy', 'suspendedAt'
+            'suspended', 'suspendedReason', 'suspendedBy', 'suspendedAt',
+            'suspendedUntil'
           ]));
 
       // Account deletion is a server-controlled operation (soft delete).

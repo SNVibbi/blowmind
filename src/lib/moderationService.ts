@@ -10,6 +10,7 @@ import {
   orderBy,
   query,
   serverTimestamp,
+  Timestamp,
   updateDoc,
   where,
   setDoc,
@@ -139,25 +140,35 @@ export async function setPostModeration(
 // Suspension
 // ---------------------------------------------------------------------
 
-/** Suspend or reinstate a user (blocks their content creation via rules). */
+/**
+ * Suspend or reinstate a user (blocks their content creation via rules).
+ * `durationDays` sets an expiry; omit or 0 for a permanent suspension.
+ */
 export async function setSuspension(
   targetUid: string,
   moderatorUid: string,
   suspended: boolean,
-  reason = ""
+  reason = "",
+  durationDays = 0
 ): Promise<void> {
+  const suspendedUntil =
+    suspended && durationDays > 0
+      ? Timestamp.fromMillis(Date.now() + durationDays * 24 * 60 * 60 * 1000)
+      : null;
+
   await updateDoc(doc(db, "users", targetUid), {
     suspended,
     suspendedReason: suspended ? reason.slice(0, 500) : "",
     suspendedBy: suspended ? moderatorUid : "",
     suspendedAt: serverTimestamp(),
+    suspendedUntil,
   });
   await writeAudit(
     moderatorUid,
     suspended ? "user-suspended" : "user-reinstated",
     "user",
     targetUid,
-    reason
+    durationDays > 0 ? `${reason} (${durationDays}d)` : reason
   );
 }
 

@@ -81,10 +81,11 @@ function ModerationQueue() {
         return;
       }
       await setPostModeration(r.postId, user!.uid, "removed");
-      await setSuspension(authorId, user!.uid, true, "Repeated policy violations");
+      // Default to a 7-day timed suspension.
+      await setSuspension(authorId, user!.uid, true, "Repeated policy violations", 7);
       await resolveReport(r.id, user!.uid, "resolved", "author-suspended");
       setReports((p) => p?.filter((x) => x.id !== r.id) ?? null);
-      toast.success("Post removed and author suspended.");
+      toast.success("Post removed and author suspended for 7 days.");
     });
 
   const dismiss = (r: Report) =>

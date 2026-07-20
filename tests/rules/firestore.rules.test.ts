@@ -768,6 +768,39 @@ describe("suspension", () => {
     await seedAliceProfile();
     await assertSucceeds(setDoc(doc(db(ALICE), "posts", "ok1"), alicePost));
   });
+
+  it("treats an expired timed suspension as inactive", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "users", ALICE), {
+        suspended: true,
+        suspendedUntil: new Date(Date.now() - 60_000), // 1 min ago
+      });
+    });
+    await assertSucceeds(setDoc(doc(db(ALICE), "posts", "expired-ok"), alicePost));
+  });
+
+  it("still blocks an unexpired timed suspension", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "users", ALICE), {
+        suspended: true,
+        suspendedUntil: new Date(Date.now() + 3_600_000), // 1 hour ahead
+      });
+    });
+    await assertFails(setDoc(doc(db(ALICE), "posts", "future-blocked"), alicePost));
+  });
+
+  it("lets a moderator set a timed suspension (suspendedUntil)", async () => {
+    await seedAliceProfile();
+    await assertSucceeds(
+      updateDoc(doc(moderatorDb("mod-uid"), "users", ALICE), {
+        suspended: true,
+        suspendedReason: "spam",
+        suspendedBy: "mod-uid",
+        suspendedAt: new Date(),
+        suspendedUntil: new Date(Date.now() + 86_400_000),
+      })
+    );
+  });
 });
 
 describe("appeals", () => {
