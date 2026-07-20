@@ -211,6 +211,25 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // ------------------------------------------------------------------
+    // blocks/{blockId} — ID convention: {blockerUid}_{targetUid}
+    // Personal block/mute list, private to its owner.
+    // ------------------------------------------------------------------
+    match /blocks/{blockId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.targetUid is string
+        && request.resource.data.targetUid != request.auth.uid
+        && request.resource.data.type in ['block', 'mute']
+        && request.resource.data.keys().hasOnly([
+          'userId', 'targetUid', 'type', 'createdAt'
+        ])
+        && blockId == request.auth.uid + '_' + request.resource.data.targetUid;
+      allow update: if false;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
     // Everything not matched above is denied (Firestore default), stated
     // here explicitly for reviewers.
     match /{document=**} {
