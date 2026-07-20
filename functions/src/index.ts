@@ -19,8 +19,9 @@ import {
   onDocumentDeleted,
 } from "firebase-functions/v2/firestore";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { onSchedule } from "firebase-functions/v2/scheduler";
 import { initializeApp } from "firebase-admin/app";
-import { getFirestore, FieldValue } from "firebase-admin/firestore";
+import { getFirestore, FieldValue, Timestamp } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
 
 initializeApp();
@@ -207,6 +208,36 @@ export const onPostDeleted = onDocumentDeleted("posts/{postId}", async (event) =
   );
   await writer.close();
 });
+
+// ---- Scheduled: lift expired suspensions -----------------------------
+// Rules already treat a suspension with a past `suspendedUntil` as
+// inactive, so users regain access at expiry regardless. This job tidies
+// the flag so the banner clears and records stay consistent.
+export const liftExpiredSuspensions = onSchedule(
+  "every 60 minutes",
+  async () => {
+    const now = Timestamp.now();
+    const expired = await db
+      .collection("users")
+      .where("suspended", "==", true)
+      .where("suspendedUntil", "<=", now)
+      .get();
+
+    if (expired.empty) return;
+
+    const writer = db.bulkWriter();
+    expired.forEach((d) =>
+      writer.update(d.ref, {
+        suspended: false,
+        suspendedReason: "",
+        suspendedBy: "",
+        suspendedAt: FieldValue.serverTimestamp(),
+      })
+    );
+    await writer.close();
+    console.log(`Lifted ${expired.size} expired suspension(s).`);
+  }
+);
 
 // ---- Admin: manage roles (custom claims) -----------------------------
 export const setUserRole = onCall(async (request) => {
