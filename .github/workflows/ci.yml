@@ -38,6 +38,9 @@ jobs:
       - name: Security-rule tests
         run: npm run test:rules
 
+      - name: Build Cloud Functions
+        run: npm --prefix functions ci && npm --prefix functions run build
+
       - name: Production build
         run: npm run build
         env:

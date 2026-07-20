@@ -43,3 +43,7 @@ ui-debug.log
 
 # local agent tooling
 .claude/
+
+# cloud functions build
+functions/lib/
+functions/node_modules/

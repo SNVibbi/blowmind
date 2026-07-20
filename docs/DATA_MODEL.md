@@ -53,20 +53,36 @@ All interaction writes go through
 - `incrementExpands` — `expands + 1`
 - `deletePost` — deletes post + the deleter's own bookmark
 
-## Known compromises (accepted until server-side code exists)
+## Counters & cleanup (server-authoritative — Stage 9)
 
-1. **Counters are client-written.** Rules restrict non-owners to counter
-   fields only, but cannot verify an increment matches a subcollection
-   write. A malicious client could inflate counts, but cannot touch
-   content, ownership, or other users' data. Fix: move counters to a
-   Cloud Function trigger.
-2. **Orphaned data after post deletion.** Subcollections and other
-   users' bookmark docs survive post deletion (clients may not delete
-   other users' data). The bookmark library skips missing posts, so
-   this is invisible to users. Fix: scheduled cleanup job or a Cloud
-   Function on post delete.
-3. **`users` docs still contain email** (pre-existing). Planned: split
+Counters are owned by **Cloud Functions** (`functions/src/index.ts`),
+which run with the Admin SDK and bypass rules. Clients write only the
+interaction document; security rules **block clients from writing the
+count fields**, so counts cannot be forged.
+
+- `onLikeCreated`/`onLikeDeleted` → `likeCount`
+- `onCommentCreated`/`onCommentDeleted` → `commentCount`
+- `onViewCreated` → `viewCount`
+- `onBookmarkCreated`/`onBookmarkDeleted` → `bookmarkCount`
+- `onPostDeleted` → recursive-deletes the post's subcollections, deletes
+  every user's bookmark for that post, and resolves open reports about it
+  (fixes the previous orphaned-data gap).
+
+`expands` remains client-written (low-stakes, no subcollection source).
+
+**Deployment dependency:** counts only move once functions are deployed
+(`firebase deploy --only functions`). The app degrades gracefully without
+them — likes/comments/bookmarks all still work (they read the interaction
+docs directly); only the displayed totals stay stale.
+
+## Remaining known limitations
+
+1. **`users` docs still contain email** (pre-existing). Planned: split
    private fields into `users/{uid}/private/profile`.
+2. **Counter trigger delivery is at-least-once.** A rare duplicate
+   trigger could drift a count by 1; acceptable for engagement metrics.
+   A periodic reconciliation job (recount from subcollections) can be
+   added if exactness is ever required.
 
 ## Migration
 
