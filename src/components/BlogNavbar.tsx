@@ -116,7 +116,7 @@ export default function BlogNavbar({ screenWidth, mobileMenu, setMobileMenu }: B
                                     <span className="text-gray-800 dark:text-gray-300 hidden sm:inline-block">
                                         {user.displayName}
                                     </span>
-                                    <Avatar src={user.photoURL || "/path/to/default/avatar.png"} alt={user.displayName || "User Avatar"}  />
+                                    <Avatar src={user.photoURL} alt={user.displayName || "User Avatar"}  />
                                 </button>
                             </Link>
                         )}
@@ -168,7 +168,7 @@ export default function BlogNavbar({ screenWidth, mobileMenu, setMobileMenu }: B
                                     aria-label="Profile"
                                 >
                                     <span className="text-gray-900 dark:text-indigo-800 flex">{user.displayName}</span>
-                                    <Avatar src={user.photoURL || "/path/to/default/avatar.png"} alt={user.displayName || "User Avatar"} />
+                                    <Avatar src={user.photoURL} alt={user.displayName || "User Avatar"} />
                                 </button>
                             </Link>
                         )}

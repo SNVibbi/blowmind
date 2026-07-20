@@ -1,5 +1,6 @@
 import Image, { StaticImageData } from "next/image";
-import DefaultAvatar from "../../public/img/default-avatar.jpg"
+
+const DEFAULT_AVATAR = "/img/default-avatar.png";
 
 interface AvatarProps {
     src: string| StaticImageData | null | undefined;
@@ -10,10 +11,10 @@ interface AvatarProps {
 const Avatar: React.FC<AvatarProps> = ({ src, alt= "User Avatar", className = "" }) => {
     return (
         <div className={`w-9 h-9 rounded-full overflow-hidden border dark:border-gray-600 ${className}`}>
-            <Image 
-                src={src || DefaultAvatar} 
-                alt={alt} 
-                className={`object-cover ${className}`} 
+            <Image
+                src={src || DEFAULT_AVATAR}
+                alt={alt}
+                className={`object-cover ${className}`}
                 width={50}
                 height={50}
             />

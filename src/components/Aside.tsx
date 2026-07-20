@@ -49,7 +49,7 @@ const Aside = (): ReactElement => {
                 <div className="fixed w-72 pr-6">
                     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md text-center">
                         <div className="relative h-20 bg-gradient-to-r from-yellow-300 to-pink-300 rounded-t-lg flex items-center justify-center">
-                            <Avatar src={currentUser.photoURL ?? "/path/to/default/avatar.png"} className="absolute to-1/2 translate-y-1/2 w-16 h-16 bg-white rounded-full border-white" />
+                            <Avatar src={currentUser.photoURL} className="absolute to-1/2 translate-y-1/2 w-16 h-16 bg-white rounded-full border-white" />
                         </div>
                         <div className="bg-white dark:bg-gray-800 p-4 rounded-b-lg">
                             <h2 className="text-lg font-semibold">{currentUser.firstName} {currentUser.lastName}</h2>

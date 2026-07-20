@@ -1,0 +1,15 @@
+<svg width="240" height="180" viewBox="0 0 240 180" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="No posts illustration">
+  <defs>
+    <linearGradient id="ep" x1="0" y1="0" x2="240" y2="180" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6366f1"/>
+      <stop offset="1" stop-color="#06b6d4"/>
+    </linearGradient>
+  </defs>
+  <rect x="60" y="34" width="120" height="120" rx="12" fill="#eef2ff" class="ep-bg"/>
+  <rect x="78" y="58" width="84" height="8" rx="4" fill="url(#ep)" opacity="0.85"/>
+  <rect x="78" y="78" width="64" height="6" rx="3" fill="#cbd5e1"/>
+  <rect x="78" y="94" width="72" height="6" rx="3" fill="#cbd5e1"/>
+  <rect x="78" y="110" width="40" height="6" rx="3" fill="#cbd5e1"/>
+  <circle cx="180" cy="132" r="22" fill="url(#ep)"/>
+  <path d="M180 122v20M170 132h20" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/>
+</svg>

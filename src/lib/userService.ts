@@ -26,7 +26,7 @@ export interface UserProfile {
   online: boolean;
 }
 
-export const DEFAULT_AVATAR = "/img/default-avatar.jpg";
+export const DEFAULT_AVATAR = "/img/default-avatar.png";
 
 function splitDisplayName(displayName: string | null): {
   firstName: string;
