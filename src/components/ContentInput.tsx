@@ -1,5 +1,6 @@
 import { useAuthContext } from "../context/AuthContext";
 import { addComment } from "../lib/postService";
+import { detectSpam } from "../lib/spam";
 import { getErrorMessage } from "../lib/errors";
 import { Post } from "../Types";
 import { ChangeEvent, FormEvent, useState } from "react";
@@ -31,6 +32,12 @@ export default function ContentInput({ post }: ContentInputProps) {
       toast.error(
         `Comments are limited to ${MAX_COMMENT_LENGTH} characters.`
       );
+      return;
+    }
+
+    const spam = detectSpam(content);
+    if (spam.spam) {
+      toast.error(spam.reason ?? "This looks like spam.");
       return;
     }
 

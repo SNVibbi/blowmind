@@ -6,6 +6,7 @@ import { useFirestore } from "../hooks/useFirestore";
 import { useDraft } from "../hooks/useDraft";
 import { useNetworkStatus } from "../hooks/useNetworkStatus";
 import { validateImageFile } from "../lib/imageUtils";
+import { detectSpam } from "../lib/spam";
 import { useRouter } from "next/router";
 import { ChangeEvent, FormEvent, ReactElement, useEffect, useState } from "react";
 import '@fortawesome/fontawesome-free/css/all.min.css';
@@ -85,6 +86,12 @@ function Create(): ReactElement {
 
         if (!title.trim() || !content.trim()) {
             toast.error("Please add a title and some content.");
+            return;
+        }
+
+        const spam = detectSpam(`${title} ${content}`);
+        if (spam.spam) {
+            toast.error(spam.reason ?? "This looks like spam.");
             return;
         }
 
