@@ -31,7 +31,8 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
+          # firebase-tools v15 requires JDK 21+ for the emulators.
+          java-version: "21"
 
       - name: Cache Firebase emulators
         uses: actions/cache@v4

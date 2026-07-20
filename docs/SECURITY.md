@@ -39,6 +39,18 @@ scheme filter (blocks `javascript:`). Covered by unit tests.
 raw internal messages, stack traces, and paths are never shown to users.
 The `ErrorBoundary` shows a recovery screen, not a stack trace.
 
+## Rate limiting (server-enforced)
+
+Cloud Functions enforce per-user sliding-window limits on creation
+(`functions/src/index.ts`, tunable in `RATE_LIMITS`): posts 5/min,
+comments 15/min. Because the checks run in the Admin SDK, clients can't
+bypass them. On breach, an over-limit **post** is soft-removed
+(`moderationStatus: "removed"`, `moderatedBy: "system:rate-limit"`) and an
+over-limit **comment** is deleted; each breach is logged to
+`rateLimitEvents`. Both `rateLimits/{uid}` and `rateLimitEvents` are
+Admin-SDK-only — clients are denied all access by rules (tested). Without
+functions deployed there is simply no limiting (graceful degradation).
+
 ## Known limitations (tracked, not yet closed)
 
 - **Client-written counters.** Rules restrict which fields non-owners can
