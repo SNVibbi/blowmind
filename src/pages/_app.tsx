@@ -1,9 +1,11 @@
 import type { AppProps } from "next/app";
 import "../../styles/globals.css";
-import { AuthContextProvider, useAuthContext } from "../context/AuthContext";
+import { AuthContextProvider } from "../context/AuthContext";
 import { ThemeProvider } from "../context/ThemeContext";
 import React, { useEffect, useState } from "react";
 import ToastConfig from "@/components/ToastConfig";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import NetworkBanner from "@/components/NetworkBanner";
 
 function MyApp({ Component, pageProps }: AppProps) {
   const [mobileMenu, setMobileMenu] = useState(false);
@@ -27,7 +29,15 @@ function MyApp({ Component, pageProps }: AppProps) {
     <AuthContextProvider>
       <ThemeProvider>
         <ToastConfig />
-        <Component {...pageProps} screenWidth={screenWidth} mobileMenu={mobileMenu} setIsMenuOpen={setMobileMenu} />
+        <NetworkBanner />
+        <ErrorBoundary>
+          <Component
+            {...pageProps}
+            screenWidth={screenWidth}
+            mobileMenu={mobileMenu}
+            setIsMenuOpen={setMobileMenu}
+          />
+        </ErrorBoundary>
       </ThemeProvider>
     </AuthContextProvider>
   );

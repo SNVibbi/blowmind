@@ -3,52 +3,66 @@ import withAuth from "../hoc/withAuth";
 import { useCategory } from "../hooks/useCategory";
 import { useDocument } from "../hooks/useDocument";
 import { useFirestore } from "../hooks/useFirestore";
+import { useDraft } from "../hooks/useDraft";
+import { useNetworkStatus } from "../hooks/useNetworkStatus";
+import { validateImageFile } from "../lib/imageUtils";
 import { useRouter } from "next/router";
 import { ChangeEvent, FormEvent, ReactElement, useEffect, useState } from "react";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import Image from "next/image";
 import { toast } from "react-toastify";
 
+interface Draft {
+    title: string;
+    content: string;
+}
+
 function Create(): ReactElement {
     const { user } = useAuthContext();
-    const { document: CurrentUser, error: userError } = useDocument("users", user?.uid || "defaultUserId"); 
+    const { document: CurrentUser, error: userError } = useDocument("users", user?.uid || "defaultUserId");
     const router = useRouter();
+    const { online } = useNetworkStatus();
     const { addDocument, response } = useFirestore("posts");
     const [add, setAdd] = useState(false);
-    const [content, setContent] = useState("");
-    const [tags, setTags] = useState<string[]>([]);
-    const [title, setTitle] = useState("");
+    const {
+        value: draft,
+        setValue: setDraft,
+        restored,
+        clearDraft,
+    } = useDraft<Draft>("create-post", { title: "", content: "" });
+    const { title, content } = draft;
+    const setTitle = (t: string) => setDraft((d) => ({ ...d, title: t }));
+    const setContent = (c: string) => setDraft((d) => ({ ...d, content: c }));
     const [file, setFile] = useState<File | null>(null);
     const [fileError, setFileError] = useState<string | null>(null);
     const [fileUrl, setFileUrl] = useState<string | null>(null);
     const { category } = useCategory();
-    const [isVideoEnable, setIsVideoEnable] = useState(false);
+    const [isVideoEnable] = useState(false);
 
     useEffect(() => {
         if (userError) {
-            console.error("Error fetching user data:", userError);
             toast.error("Error fetching user data. Please try again.")
         }
+    }, [userError]);
 
-        if (file) {
-            setFileUrl(URL.createObjectURL(file));
-        }
-    }, [file, userError]);
+    useEffect(() => {
+        if (!file) return;
+        const url = URL.createObjectURL(file);
+        setFileUrl(url);
+        return () => URL.revokeObjectURL(url);
+    }, [file]);
 
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>): void => {
         setFile(null);
-        let selected = e.target.files && e.target.files[0];
+        const selected = e.target.files && e.target.files[0];
 
         if (!selected) {
             setFileError("Please select a file");
             return;
         }
-        if (!selected.type.includes("image") && (!selected.type.includes("video") || !isVideoEnable)) {
-            setFileError("Selected file must be an image or a video");
-            return;
-        }
-        if (selected.size > 5000000) {
-            setFileError("File size must be less than 5MB");
+        const validationError = validateImageFile(selected);
+        if (validationError) {
+            setFileError(validationError);
             return;
         }
 
@@ -59,6 +73,20 @@ function Create(): ReactElement {
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
         e.preventDefault();
+
+        // Duplicate-submission guard: the reducer flips isPending
+        // synchronously inside addDocument, but guard here too.
+        if (response.isPending) return;
+
+        if (!online) {
+            toast.error("You're offline. Reconnect to publish your post.");
+            return;
+        }
+
+        if (!title.trim() || !content.trim()) {
+            toast.error("Please add a title and some content.");
+            return;
+        }
 
         const newTags = await category(content);
 
@@ -84,22 +112,35 @@ function Create(): ReactElement {
             expands: 0,
         };
 
-        await addDocument(post, file || undefined);
+        const newId = await addDocument(post, file || undefined);
 
-        if (!response.error) {
-            setTitle("");
-            setContent("");
+        if (newId) {
+            clearDraft();
             setFile(null);
             router.push("/blog");
-        } else {
-            toast.error(`Error publishing post ${response.error}`)
-            alert("Error publishing post. Please try again.");
         }
+        // On failure, addDocument already surfaced a friendly toast and the
+        // draft is preserved so the user can retry without retyping.
     };
 
     return (
         <form className="p-6 space-y-6 bg-white dark:bg-gray-800 rounded-lg shadow-md" onSubmit={handleSubmit}>
-            {response.error && <div className="text-red-600">{response.error}</div>}
+            {response.error && <div className="text-red-600" role="alert">{response.error}</div>}
+            {restored && (title || content) && (
+                <div className="flex items-center justify-between rounded-md bg-indigo-50 dark:bg-indigo-900/40 px-3 py-2 text-sm text-indigo-800 dark:text-indigo-200">
+                    <span>
+                        <i className="fas fa-clock-rotate-left mr-2" aria-hidden="true"></i>
+                        Restored your unsaved draft.
+                    </span>
+                    <button
+                        type="button"
+                        onClick={() => { clearDraft(); setTitle(""); setContent(""); }}
+                        className="underline hover:no-underline"
+                    >
+                        Discard
+                    </button>
+                </div>
+            )}
             <div className="flex justify-between items-center mb-4">
                 <button 
                     type="submit" 

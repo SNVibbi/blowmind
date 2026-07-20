@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import { useAuthContext } from "../context/AuthContext";
 import Logo from "../../public/img/Blow-Mind.png";
@@ -7,6 +7,7 @@ import Avatar from "./Avatar";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import NavbarOption from "./NavbarOption";
 import useTheme from "@/hooks/useTheme";
+import { useFocusTrap } from "../hooks/useFocusTrap";
 
 interface BlogNavbarProps {
     screenWidth: number;
@@ -30,6 +31,11 @@ export default function BlogNavbar({ screenWidth, mobileMenu, setMobileMenu }: B
             setGreeting("Good Evening");
         }
     }, []);
+
+    const closeMenu = useCallback(() => setMobileMenu(false), [setMobileMenu]);
+
+    // Keyboard focus trap, Escape-to-close, and body-scroll lock while open.
+    useFocusTrap(mobileMenuRef, mobileMenu && screenWidth < 640, closeMenu);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -62,11 +68,13 @@ export default function BlogNavbar({ screenWidth, mobileMenu, setMobileMenu }: B
             <div className="flex items-center justify-between w-full">
                 {screenWidth < 640 && (
                     <button
-                        className="text-indigo-600 dark:text-white"
+                        className="flex h-11 w-11 items-center justify-center text-indigo-600 dark:text-white"
                         onClick={() => setMobileMenu(!mobileMenu)}
-                        aria-label="Toggle mobile menu"
+                        aria-label={mobileMenu ? "Close menu" : "Open menu"}
+                        aria-expanded={mobileMenu}
+                        aria-controls="mobile-menu"
                     >
-                        <i className={`fas ${mobileMenu ? 'fa-times' : 'fa-bars'} text-xl`}></i>
+                        <i className={`fas ${mobileMenu ? 'fa-times' : 'fa-bars'} text-xl`} aria-hidden="true"></i>
                     </button>
                 )}
                 {screenWidth >= 640 && (
@@ -118,9 +126,20 @@ export default function BlogNavbar({ screenWidth, mobileMenu, setMobileMenu }: B
             {mobileMenu && screenWidth < 640 && (
                 <div
                     ref={mobileMenuRef}
-                    className="absolute flex flex-col top-0 left-0 w-full h-full bg-gray-200 dark:bg-gray-800 z-50 p-4 transition-transform transform ease-in-out duration-300"
+                    id="mobile-menu"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Main menu"
+                    className="fixed flex flex-col top-0 left-0 w-full h-full bg-gray-200 dark:bg-gray-800 z-50 p-4 transition-transform transform ease-in-out duration-300"
                     style={{ transform: mobileMenu ? "translateX(0)" : "translateX(-100%)" }}
                 >
+                    <button
+                        onClick={handleMenuItemClick}
+                        aria-label="Close menu"
+                        className="self-end flex h-11 w-11 items-center justify-center text-gray-800 dark:text-gray-200"
+                    >
+                        <i className="fas fa-times text-xl" aria-hidden="true"></i>
+                    </button>
                     <Link href="/">
                         <button className="flex items-center mb-2" aria-label="Home" onClick={handleMenuItemClick}>
                             <Image src={Logo} alt="Logo" width={70} height={70} />
