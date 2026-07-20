@@ -1,8 +1,10 @@
 import { db } from "../utils/firebaseConfig";
 import { User as FirebaseUser } from "firebase/auth";
 import {
+  addDoc,
   collection,
   doc,
+  getDoc,
   getDocs,
   limit,
   orderBy,
@@ -116,6 +118,7 @@ export async function resolveReport(
     resolvedAt: serverTimestamp(),
     resolvedBy: moderatorUid,
   });
+  await writeAudit(moderatorUid, `report-${status}`, "report", reportId);
 }
 
 /** Soft-remove or restore a post (hides it from the public via rules). */
@@ -129,4 +132,139 @@ export async function setPostModeration(
     moderatedAt: serverTimestamp(),
     moderatedBy: moderatorUid,
   });
+  await writeAudit(moderatorUid, `post-${status}`, "post", postId);
+}
+
+// ---------------------------------------------------------------------
+// Suspension
+// ---------------------------------------------------------------------
+
+/** Suspend or reinstate a user (blocks their content creation via rules). */
+export async function setSuspension(
+  targetUid: string,
+  moderatorUid: string,
+  suspended: boolean,
+  reason = ""
+): Promise<void> {
+  await updateDoc(doc(db, "users", targetUid), {
+    suspended,
+    suspendedReason: suspended ? reason.slice(0, 500) : "",
+    suspendedBy: suspended ? moderatorUid : "",
+    suspendedAt: serverTimestamp(),
+  });
+  await writeAudit(
+    moderatorUid,
+    suspended ? "user-suspended" : "user-reinstated",
+    "user",
+    targetUid,
+    reason
+  );
+}
+
+// ---------------------------------------------------------------------
+// Appeals
+// ---------------------------------------------------------------------
+
+export interface Appeal {
+  id: string;
+  uid: string;
+  message: string;
+  status: "open" | "granted" | "denied";
+  createdAt?: { seconds: number };
+}
+
+/** A suspended user submits (or replaces) their appeal. */
+export async function submitAppeal(uid: string, message: string): Promise<void> {
+  await setDoc(doc(db, "appeals", uid), {
+    uid,
+    message: message.slice(0, 2000),
+    status: "open",
+    createdAt: serverTimestamp(),
+  });
+}
+
+/** A user's own appeal, if any. */
+export async function fetchMyAppeal(uid: string): Promise<Appeal | null> {
+  const snap = await getDoc(doc(db, "appeals", uid));
+  return snap.exists() ? { ...(snap.data() as Omit<Appeal, "id">), id: snap.id } : null;
+}
+
+/** Open appeals for the moderation queue. */
+export async function fetchOpenAppeals(max = 50): Promise<Appeal[]> {
+  const snapshot = await getDocs(
+    query(
+      collection(db, "appeals"),
+      where("status", "==", "open"),
+      orderBy("createdAt", "desc"),
+      limit(max)
+    )
+  );
+  return snapshot.docs.map((d) => ({
+    ...(d.data() as Omit<Appeal, "id">),
+    id: d.id,
+  }));
+}
+
+/** Moderator decision on an appeal (also reinstates the user if granted). */
+export async function resolveAppeal(
+  uid: string,
+  moderatorUid: string,
+  decision: "granted" | "denied"
+): Promise<void> {
+  await updateDoc(doc(db, "appeals", uid), {
+    status: decision,
+    resolvedAt: serverTimestamp(),
+    resolvedBy: moderatorUid,
+  });
+  if (decision === "granted") {
+    await setSuspension(uid, moderatorUid, false);
+  }
+  await writeAudit(moderatorUid, `appeal-${decision}`, "user", uid);
+}
+
+// ---------------------------------------------------------------------
+// Audit log
+// ---------------------------------------------------------------------
+
+export interface AuditEntry {
+  id: string;
+  actorUid: string;
+  action: string;
+  targetType: string;
+  targetId: string;
+  note?: string;
+  createdAt?: { seconds: number };
+}
+
+/** Append a moderator-action record. Never throws (audit is best-effort). */
+export async function writeAudit(
+  actorUid: string,
+  action: string,
+  targetType: string,
+  targetId: string,
+  note = ""
+): Promise<void> {
+  try {
+    await addDoc(collection(db, "auditLog"), {
+      actorUid,
+      action,
+      targetType,
+      targetId,
+      note: note.slice(0, 500),
+      createdAt: serverTimestamp(),
+    });
+  } catch {
+    /* audit logging must not break the underlying action */
+  }
+}
+
+/** Recent audit entries for the moderation dashboard. */
+export async function fetchAuditLog(max = 50): Promise<AuditEntry[]> {
+  const snapshot = await getDocs(
+    query(collection(db, "auditLog"), orderBy("createdAt", "desc"), limit(max))
+  );
+  return snapshot.docs.map((d) => ({
+    ...(d.data() as Omit<AuditEntry, "id">),
+    id: d.id,
+  }));
 }

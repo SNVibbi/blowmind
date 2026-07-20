@@ -715,6 +715,150 @@ describe("blocks collection", () => {
   });
 });
 
+describe("suspension", () => {
+  async function suspend(uid: string) {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), "users", uid),
+        { suspended: true },
+        { merge: true }
+      );
+    });
+  }
+
+  it("lets a moderator set suspension fields on a user", async () => {
+    await seedAliceProfile();
+    await assertSucceeds(
+      updateDoc(doc(moderatorDb("mod-uid"), "users", ALICE), {
+        suspended: true,
+        suspendedReason: "spam",
+        suspendedBy: "mod-uid",
+        suspendedAt: new Date(),
+      })
+    );
+  });
+
+  it("denies a user suspending themselves or others", async () => {
+    await seedAliceProfile();
+    await assertFails(
+      updateDoc(doc(db(ALICE), "users", ALICE), { suspended: false })
+    );
+  });
+
+  it("blocks a suspended user from creating a post", async () => {
+    await suspend(ALICE);
+    await assertFails(setDoc(doc(db(ALICE), "posts", "sp"), alicePost));
+  });
+
+  it("blocks a suspended user from commenting", async () => {
+    await seedAlicePost();
+    await suspend(BOB);
+    await assertFails(
+      setDoc(doc(db(BOB), "posts", "post1", "comments", "c9"), {
+        userId: BOB,
+        displayName: "Bob",
+        photoURL: "",
+        content: "hi",
+        createdAt: new Date(),
+      })
+    );
+  });
+
+  it("still lets a non-suspended user post", async () => {
+    await seedAliceProfile();
+    await assertSucceeds(setDoc(doc(db(ALICE), "posts", "ok1"), alicePost));
+  });
+});
+
+describe("appeals", () => {
+  it("lets a user file their own appeal", async () => {
+    await assertSucceeds(
+      setDoc(doc(db(ALICE), "appeals", ALICE), {
+        uid: ALICE,
+        message: "Please reinstate me.",
+        status: "open",
+        createdAt: new Date(),
+      })
+    );
+  });
+
+  it("denies filing an appeal for someone else", async () => {
+    await assertFails(
+      setDoc(doc(db(BOB), "appeals", ALICE), {
+        uid: ALICE,
+        message: "x",
+        status: "open",
+        createdAt: new Date(),
+      })
+    );
+  });
+
+  it("lets a moderator read and decide appeals", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "appeals", ALICE), {
+        uid: ALICE,
+        message: "appeal",
+        status: "open",
+        createdAt: new Date(),
+      });
+    });
+    await assertSucceeds(getDoc(doc(moderatorDb("mod-uid"), "appeals", ALICE)));
+    await assertSucceeds(
+      updateDoc(doc(moderatorDb("mod-uid"), "appeals", ALICE), { status: "granted" })
+    );
+  });
+
+  it("denies a normal user reading another's appeal", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "appeals", ALICE), {
+        uid: ALICE,
+        message: "appeal",
+        status: "open",
+        createdAt: new Date(),
+      });
+    });
+    await assertFails(getDoc(doc(db(BOB), "appeals", ALICE)));
+  });
+});
+
+describe("audit log", () => {
+  it("lets a moderator append an entry as themselves", async () => {
+    await assertSucceeds(
+      setDoc(doc(moderatorDb("mod-uid"), "auditLog", "a1"), {
+        actorUid: "mod-uid",
+        action: "post-removed",
+        targetType: "post",
+        targetId: "post1",
+        createdAt: new Date(),
+      })
+    );
+  });
+
+  it("denies a non-moderator writing audit entries", async () => {
+    await assertFails(
+      setDoc(doc(db(ALICE), "auditLog", "a2"), {
+        actorUid: ALICE,
+        action: "fake",
+        targetType: "post",
+        targetId: "x",
+        createdAt: new Date(),
+      })
+    );
+  });
+
+  it("denies a moderator spoofing the actorUid", async () => {
+    await assertFails(
+      setDoc(doc(moderatorDb("mod-uid"), "auditLog", "a3"), {
+        actorUid: "someone-else",
+        action: "post-removed",
+        targetType: "post",
+        targetId: "x",
+        createdAt: new Date(),
+      })
+    );
+  });
+});
+
 describe("server-only collections", () => {
   it("denies clients any access to rateLimits and rateLimitEvents", async () => {
     // These are written only by Cloud Functions (Admin SDK bypasses rules).

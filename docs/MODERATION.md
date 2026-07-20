@@ -67,12 +67,38 @@ Note: filtering is client-side (a personal view filter), so it hides
 content from the blocker; it does not prevent the blocked user from
 posting. Cross-user interaction blocking would need server enforcement.
 
+## Suspension & appeals
+
+Moderators can **suspend** a user (dashboard → a report → "Remove &
+suspend author"). Suspension sets `suspended`/`suspendedReason`/
+`suspendedBy`/`suspendedAt` on the user's profile; security rules then
+**block that user from creating posts, comments, or reports** (enforced
+via a `get()` on their profile at write time — creates are rare enough
+that the extra read is fine). A suspended user sees an app-wide banner
+(`SuspensionBanner`) and can file one **appeal** at `/appeal`.
+
+Appeals live in `appeals/{uid}` (private to the user + moderators).
+Moderators review them in the dashboard **Appeals** tab and Grant
+(auto-reinstates the user) or Deny.
+
+## Moderator audit log
+
+Every moderator action (post remove/restore, report resolve/dismiss,
+suspend/reinstate, appeal grant/deny) appends an entry to `auditLog`
+via `writeAudit`. Rules make it append-only, require `actorUid` to equal
+the acting moderator, and restrict reads to moderators. Viewable in the
+dashboard **Audit log** tab.
+
+Note: audit entries are written client-side by authenticated moderators
+(rule-constrained). Fully tamper-proof logging would move these writes
+into Cloud Functions; the current model records who did what and is
+adequate for a trusted moderator team.
+
 ## Not yet built (roadmap)
 
-- Rate limiting and spam heuristics (Cloud Functions foundation now
-  exists — see functions/).
-- Suspension/appeal workflow and a dedicated moderator audit log
-  (moderatedBy/resolvedBy are already recorded on the documents).
+- Timed/auto-expiring suspensions (currently a moderator lifts them, or
+  a granted appeal does); would need a scheduled Cloud Function.
+- Spam heuristics beyond the rate limits in `functions/`.
 
 ## Principle
 

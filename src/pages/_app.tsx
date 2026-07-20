@@ -7,6 +7,7 @@ import React, { useEffect, useState } from "react";
 import ToastConfig from "@/components/ToastConfig";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import NetworkBanner from "@/components/NetworkBanner";
+import SuspensionBanner from "@/components/SuspensionBanner";
 
 const SITE_TITLE = "BlowMind — Write, read, and connect with great minds";
 const SITE_DESCRIPTION =
@@ -49,6 +50,7 @@ function MyApp({ Component, pageProps }: AppProps) {
         </Head>
         <ToastConfig />
         <NetworkBanner />
+        <SuspensionBanner />
         <ErrorBoundary>
           <Component
             {...pageProps}
