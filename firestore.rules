@@ -98,6 +98,15 @@ service cloud.firestore {
 
       // Account deletion is a server-controlled operation (soft delete).
       allow delete: if false;
+
+      // users/{uid}/notifications/{id} — created by Cloud Functions only;
+      // the owner may read them and mark them read.
+      match /notifications/{notifId} {
+        allow read: if isOwner(userId);
+        allow update: if isOwner(userId)
+          && affectedKeys().hasOnly(['read']);
+        allow create, delete: if false;
+      }
     }
 
     // ------------------------------------------------------------------

@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useRole } from "../hooks/useRole";
+import NotificationBell from "./NotificationBell";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 
 interface IconLinkProps {
@@ -42,6 +43,7 @@ export default function NavbarOption() {
     <div className="flex items-center gap-2">
       <IconLink href="/create-post" icon="pen-to-square" label="Write a post" />
       <IconLink href="/bookmark" icon="bookmark" label="Bookmarks" />
+      <NotificationBell />
       {isModerator && (
         <IconLink href="/moderation" icon="shield-halved" label="Moderation queue" />
       )}
