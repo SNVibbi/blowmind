@@ -17,6 +17,7 @@ import { setGlobalOptions } from "firebase-functions/v2";
 import {
   onDocumentCreated,
   onDocumentDeleted,
+  onDocumentUpdated,
 } from "firebase-functions/v2/firestore";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
@@ -338,6 +339,43 @@ export const onPostDeleted = onDocumentDeleted("posts/{postId}", async (event) =
   );
   await writer.close();
 });
+
+// ---- Keep post author snapshots fresh --------------------------------
+// Posts embed an author snapshot (name/photo/headline) for cheap reads.
+// When a user edits their profile, refresh that snapshot on their posts.
+// Guarded to only run when a display field actually changed (so the
+// frequent online:true/false toggles on login/logout do NOT trigger the
+// expensive fan-out).
+export const onUserProfileUpdated = onDocumentUpdated(
+  "users/{uid}",
+  async (event) => {
+    const before = event.data?.before.data() ?? {};
+    const after = event.data?.after.data() ?? {};
+
+    const displayFields = ["firstName", "lastName", "photoUrl", "headline"];
+    const changed = displayFields.some((f) => before[f] !== after[f]);
+    if (!changed) return;
+
+    const uid = event.params.uid;
+    const posts = await db
+      .collection("posts")
+      .where("author.id", "==", uid)
+      .get();
+    if (posts.empty) return;
+
+    const writer = db.bulkWriter();
+    posts.forEach((p) =>
+      writer.update(p.ref, {
+        "author.firstName": after.firstName ?? "",
+        "author.lastName": after.lastName ?? "",
+        "author.photoURL": after.photoUrl ?? "",
+        "author.headline": after.headline ?? "",
+      })
+    );
+    await writer.close();
+    console.log(`Refreshed author snapshot on ${posts.size} post(s) for ${uid}.`);
+  }
+);
 
 // ---- Scheduled: lift expired suspensions -----------------------------
 // Rules already treat a suspension with a past `suspendedUntil` as

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../utils/firebaseConfig";
 import { getAppError } from "../lib/errors";
-import MainNavbar from "../components/MainNavbar";
+import PublicHeader from "../components/marketing/PublicHeader";
 import Footer from "../components/Footer";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 
@@ -36,7 +36,7 @@ const ForgotPassword: React.FC = () => {
 
   return (
     <>
-      <MainNavbar />
+      <PublicHeader />
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-200 dark:bg-gray-900 py-1">
         <div className="bg-gray-200 dark:bg-gray-800 shadow-lg rounded-lg p-8 mt-4 w-full max-w-md">
           <h1 className="text-2xl font-bold mb-2 text-gray-800 dark:text-gray-100">
