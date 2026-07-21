@@ -1,17 +1,17 @@
 import type { GetServerSideProps } from "next";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { useDocument } from "../../hooks/useDocument";
-import Footer from "../../components/Footer";
-import BlogNavbar from "../../components/BlogNavbar";
-import PostComment from "../../components/PostComment";
-import Reaction from "../../components/Reaction";
+import { useDocument } from "../../../hooks/useDocument";
+import Footer from "../../../components/Footer";
+import BlogNavbar from "../../../components/BlogNavbar";
+import PostComment from "../../../components/PostComment";
+import Reaction from "../../../components/Reaction";
 import PostDetails from "@/components/PostDetails";
 import { useState, useEffect } from "react";
-import { Post } from "../../Types";
+import { Post } from "../../../Types";
 import { doc, getDoc } from "firebase/firestore";
-import { db } from "../../utils/firebaseConfig";
-import { toPlainText } from "../../lib/text";
+import { db } from "../../../utils/firebaseConfig";
+import { toPlainText } from "../../../lib/text";
 
 interface PostMeta {
   title: string;
