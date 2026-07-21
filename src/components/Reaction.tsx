@@ -16,11 +16,9 @@ const Reaction: React.FC<ReactionProps> = ({ post }) => {
   const { user } = useAuthContext();
   const liked = useLikeStatus(post.id, user?.uid);
   const [isPending, setIsPending] = useState(false);
+  const [pop, setPop] = useState(false);
 
   const counts = getPostCounts(post);
-  // Optimistic display: the counter on the post doc lags our own action
-  // slightly, so adjust it locally by the live liked status.
-  const likeDisplay = counts.likes;
 
   const handleLike = async () => {
     if (!user) {
@@ -28,7 +26,8 @@ const Reaction: React.FC<ReactionProps> = ({ post }) => {
       return;
     }
     if (isPending) return;
-
+    setPop(true);
+    setTimeout(() => setPop(false), 250);
     setIsPending(true);
     try {
       await toggleLike(post.id, user);
@@ -40,39 +39,36 @@ const Reaction: React.FC<ReactionProps> = ({ post }) => {
   };
 
   return (
-    <div className="flex justify-between items-center mt-2">
-      <Link
-        href={`/posts/${post.id}`}
-        className="flex items-center gap-2 p-2 text-gray-800 dark:text-gray-200"
-        aria-label={`${counts.comments} comments`}
-      >
-        <i className="fas fa-comments" aria-hidden="true"></i>
-        <span className="text-sm">{counts.comments}</span>
-      </Link>
-
+    <div className="flex items-center gap-1">
       <button
-        className="flex items-center gap-2 p-2 text-gray-800 dark:text-gray-200 disabled:opacity-50"
         onClick={handleLike}
         disabled={isPending}
         aria-pressed={liked}
-        aria-label={liked ? "Unlike this post" : "Like this post"}
+        aria-label={liked ? "Unlike" : "Like"}
+        className={`engage ${liked ? "text-red-600 dark:text-red-400" : ""}`}
       >
-        {liked ? (
-          <i className="fas fa-heart text-red-600" aria-hidden="true"></i>
-        ) : (
-          <i className="far fa-heart" aria-hidden="true"></i>
-        )}
-        <span className="text-sm">{likeDisplay}</span>
+        <i
+          className={`${liked ? "fas" : "far"} fa-heart transition-transform ${
+            pop ? "scale-125" : ""
+          }`}
+          aria-hidden="true"
+        ></i>
+        <span>{counts.likes}</span>
       </button>
 
-      <div
-        className="flex items-center gap-2 p-2 text-gray-800 dark:text-gray-200"
-        aria-label={`${counts.views} views`}
+      <Link
+        href={`/posts/${post.id}`}
+        className="engage"
+        aria-label={`${counts.comments} comments`}
       >
-        <i className="fas fa-eye" aria-hidden="true"></i>
-        <span className="text-sm">{counts.views}</span>
-        <span className="text-sm hidden md:inline">views</span>
-      </div>
+        <i className="far fa-comment" aria-hidden="true"></i>
+        <span>{counts.comments}</span>
+      </Link>
+
+      <span className="engage cursor-default hover:bg-transparent hover:text-gray-500">
+        <i className="far fa-eye" aria-hidden="true"></i>
+        <span>{counts.views}</span>
+      </span>
     </div>
   );
 };
