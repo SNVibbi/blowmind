@@ -36,6 +36,7 @@ export interface Post {
   tags: string[];
   share: string;
   userId?: string;
+  moderationStatus?: "ok" | "removed";
 
   // Denormalized counters (authoritative for migrated posts)
   commentCount?: number;

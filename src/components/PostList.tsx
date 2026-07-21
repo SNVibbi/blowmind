@@ -66,16 +66,20 @@ const PostList: React.FC<PostListProps> = ({ posts, msg }) => {
           >
             {/* Author row */}
             <div className="flex items-center gap-3">
-              <Link href={`/posts/${post.id}`} className="avatar-ring shrink-0">
+              <div className="avatar-ring shrink-0">
                 <Avatar
                   src={post.author.photoURL}
+                  uid={post.author.id}
                   className="h-11 w-11 border-2 border-white dark:border-gray-800"
                 />
-              </Link>
+              </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate font-semibold text-gray-900 dark:text-gray-100">
+                <Link
+                  href={`/users/${post.author.id}`}
+                  className="block truncate font-semibold text-gray-900 hover:text-brand-600 dark:text-gray-100 dark:hover:text-brand-400"
+                >
                   {post.author.firstName} {post.author.lastName}
-                </p>
+                </Link>
                 <p className="truncate text-xs text-gray-500 dark:text-gray-400">
                   {post.author.headline ? `${post.author.headline} · ` : ""}
                   {post.createdAt?.toDate?.().toDateString().slice(4)} ·{" "}

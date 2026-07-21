@@ -16,7 +16,44 @@ import {
   setDoc,
   updateDoc,
   where,
+  limit as fsLimit,
+  orderBy,
 } from "firebase/firestore";
+
+/**
+ * Search posts by keyword across title, tags, and author name.
+ *
+ * Firestore has no native full-text search, so this fetches a recent
+ * window of posts and filters in memory — fine at early scale. The
+ * function boundary is deliberate: swap the body for a dedicated search
+ * provider (Algolia/Typesense) later without touching the UI. See
+ * docs/SCALING.md.
+ */
+export async function searchPosts(term: string, max = 100): Promise<Post[]> {
+  const q = term.trim().toLowerCase();
+  if (!q) return [];
+
+  const snapshot = await getDocs(
+    query(collection(db, "posts"), orderBy("createdAt", "desc"), fsLimit(max))
+  );
+
+  const posts = snapshot.docs.map((d) => ({
+    ...(d.data() as Omit<Post, "id">),
+    id: d.id,
+  }));
+
+  return posts.filter((post) => {
+    if (post.moderationStatus === "removed") return false;
+    const haystack = [
+      post.title,
+      ...(post.tags ?? []),
+      `${post.author?.firstName ?? ""} ${post.author?.lastName ?? ""}`,
+    ]
+      .join(" ")
+      .toLowerCase();
+    return haystack.includes(q);
+  });
+}
 
 /**
  * All post-interaction writes live here. Every operation is idempotent

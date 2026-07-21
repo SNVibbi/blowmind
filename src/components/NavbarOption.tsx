@@ -1,45 +1,51 @@
 import React from "react";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { useRole } from "../hooks/useRole";
-import '@fortawesome/fontawesome-free/css/all.min.css';
+import "@fortawesome/fontawesome-free/css/all.min.css";
 
+interface IconLinkProps {
+  href: string;
+  icon: string;
+  label: string;
+}
+
+/**
+ * Signed-in quick actions. Every item is a real, working link (the old
+ * dead "comments" and "notification" buttons were removed). A proper
+ * notifications center is tracked as its own feature.
+ */
 export default function NavbarOption() {
-    const { isModerator } = useRole();
+  const { isModerator } = useRole();
+  const router = useRouter();
 
+  const IconLink: React.FC<IconLinkProps> = ({ href, icon, label }) => {
+    const active = router.pathname === href;
     return (
-        <div className="flex gap-2 sm:gap-4">
-            <button
-                type="button"
-                className="p-2 ml-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100"
-                aria-label="Comments"
-            >
-                <i className="fas fa-comments" aria-hidden="true"></i>
-            </button>
-            <button
-                type="button"
-                className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100"
-                aria-label="Notification"
-            >
-                <i className="fas fa-bell" aria-hidden="true"></i>
-            </button>
-            {isModerator && (
-                <Link
-                    href="/moderation"
-                    className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100"
-                    aria-label="Moderation queue"
-                    title="Moderation queue"
-                >
-                    <i className="fas fa-shield-halved" aria-hidden="true"></i>
-                </Link>
-            )}
-            <Link
-                href="/settings"
-                className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100"
-                aria-label="Settings"
-                title="Settings"
-            >
-                <i className="fas fa-gear" aria-hidden="true"></i>
-            </Link>
-        </div>
+      <Link
+        href={href}
+        aria-label={label}
+        title={label}
+        aria-current={active ? "page" : undefined}
+        className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
+          active
+            ? "bg-brand-600 text-white"
+            : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600"
+        }`}
+      >
+        <i className={`fas fa-${icon}`} aria-hidden="true"></i>
+      </Link>
     );
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <IconLink href="/create-post" icon="pen-to-square" label="Write a post" />
+      <IconLink href="/bookmark" icon="bookmark" label="Bookmarks" />
+      {isModerator && (
+        <IconLink href="/moderation" icon="shield-halved" label="Moderation queue" />
+      )}
+      <IconLink href="/settings" icon="gear" label="Settings" />
+    </div>
+  );
 }
