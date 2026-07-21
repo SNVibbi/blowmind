@@ -47,3 +47,9 @@ ui-debug.log
 # cloud functions build
 functions/lib/
 functions/node_modules/
+
+# playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
