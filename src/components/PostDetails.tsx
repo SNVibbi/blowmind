@@ -9,6 +9,7 @@ import { Post } from "../Types";
 import { sanitizeHtml } from "../lib/sanitize";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import Image from "next/image";
+import Link from "next/link";
 import React from "react";
 
 interface PostDetailsProps {
@@ -42,13 +43,17 @@ const PostDetails: React.FC<PostDetailsProps> = ({ post }) => {
         <div className="avatar-ring shrink-0">
           <Avatar
             src={post.author.photoURL}
+            uid={post.author.id}
             className="h-11 w-11 border-2 border-white dark:border-gray-800"
           />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="font-semibold text-gray-900 dark:text-gray-100">
+          <Link
+            href={`/users/${post.author.id}`}
+            className="font-semibold text-gray-900 hover:text-brand-600 dark:text-gray-100 dark:hover:text-brand-400"
+          >
             {post.author.firstName} {post.author.lastName}
-          </p>
+          </Link>
           <p className="text-xs text-gray-500 dark:text-gray-400">
             {post.createdAt?.toDate?.().toDateString().slice(4)} ·{" "}
             {calculateReadingTime(post.content)}

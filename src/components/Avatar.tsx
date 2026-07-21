@@ -1,25 +1,49 @@
-import Image, { StaticImageData } from "next/image";
+import Link from "next/link";
 
 const DEFAULT_AVATAR = "/img/default-avatar.png";
 
 interface AvatarProps {
-    src: string| StaticImageData | null | undefined;
-    className?: string;
-    alt?: string;
+  src?: string | null;
+  alt?: string;
+  /** Sizing classes, e.g. "h-11 w-11". Defaults to a small avatar. */
+  className?: string;
+  /** If set, the avatar links to that user's public profile. */
+  uid?: string;
 }
 
-const Avatar: React.FC<AvatarProps> = ({ src, alt= "User Avatar", className = "" }) => {
+/**
+ * Bulletproof avatar: a plain <img> (not next/image) so any user-provided
+ * photo URL renders regardless of host allowlist, with an automatic
+ * fallback to the default avatar if the image fails to load.
+ */
+const Avatar: React.FC<AvatarProps> = ({
+  src,
+  alt = "User avatar",
+  className = "h-9 w-9",
+  uid,
+}) => {
+  const img = (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src || DEFAULT_AVATAR}
+      alt={alt}
+      loading="lazy"
+      onError={(e) => {
+        const el = e.currentTarget;
+        if (!el.src.endsWith(DEFAULT_AVATAR)) el.src = DEFAULT_AVATAR;
+      }}
+      className={`${className} shrink-0 rounded-full bg-gray-100 object-cover dark:bg-gray-700`}
+    />
+  );
+
+  if (uid) {
     return (
-        <div className={`w-9 h-9 rounded-full overflow-hidden border dark:border-gray-600 ${className}`}>
-            <Image
-                src={src || DEFAULT_AVATAR}
-                alt={alt}
-                className={`object-cover ${className}`}
-                width={50}
-                height={50}
-            />
-        </div>
+      <Link href={`/users/${uid}`} aria-label="View profile" className="shrink-0">
+        {img}
+      </Link>
     );
+  }
+  return img;
 };
 
 export default Avatar;
