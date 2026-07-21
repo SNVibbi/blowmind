@@ -1,72 +1,107 @@
-import Avatar from '../components/Avatar';
-import BookmarkIcon from '../components/BookmarkIcon';
-import ContentInput from '../components/ContentInput';
-import ReportButton from '../components/ReportButton';
-import DefaultAvatar from "../../public/img/default-avatar.jpg"
-import Reaction from '../components/Reaction';
-import { useAuthContext } from '@/context/AuthContext';
-import { Post } from '../Types';
-import { sanitizeHtml } from '../lib/sanitize';
-import '@fortawesome/fontawesome-free/css/all.min.css';
-import Image from 'next/image';
-import React from 'react';
-
+import Avatar from "../components/Avatar";
+import BookmarkIcon from "../components/BookmarkIcon";
+import ContentInput from "../components/ContentInput";
+import ReportButton from "../components/ReportButton";
+import Reaction from "../components/Reaction";
+import { useAuthContext } from "@/context/AuthContext";
+import { useReadTime } from "../hooks/useReadTime";
+import { Post } from "../Types";
+import { sanitizeHtml } from "../lib/sanitize";
+import "@fortawesome/fontawesome-free/css/all.min.css";
+import Image from "next/image";
+import React from "react";
 
 interface PostDetailsProps {
-    post: Post;
+  post: Post;
 }
 
 const PostDetails: React.FC<PostDetailsProps> = ({ post }) => {
-    const { user } =useAuthContext();
+  const { user } = useAuthContext();
+  const { calculateReadingTime } = useReadTime();
 
-    
-    return (
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md max-w-4xl mx-auto">
-            <div className="flex flex-col md:flex-row md:items-center justify-between">
-                <div className="flex items-center space-x-4">
-                    <Avatar src={post.author.photoURL} className='w-16 h-16 md:w-22 md:h-22' />
-                </div>
-                <div>
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                        {post.author.firstName} {post.author.lastName}
-                    </h2>
-                    <span className="text-gray-500 dark:text-gray-400 text-sm">
-                        {post.createdAt.toDate().toDateString().slice(3) || "Unknown Date"}
-                    </span>
-                </div>
-            </div>
-            <div className="flex items-center space-x-4 mt-4 md:mt-0">
-                <BookmarkIcon post={post} />
-                {user && user.uid !== post.author.id && (
-                    <ReportButton targetType="post" targetId={post.id} postId={post.id} />
-                )}
-            </div>
-
-            <div className="mt-4">
-                <p
-                    className="text-gray-800 dark:text-gray-200"
-                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content) }}
-                />
-                 {post.imageURL && (
-                        <Image 
-                            className="w-full" 
-                            src={post.imageURL} 
-                            alt='Post content' 
-                            width={800}
-                            height={600}
-                            layout="responsive"
-                        />
-                    )}
-            </div>
-            <Reaction post={post} />
-
-            <div className="flex flex-col md:flex-row items-center mt-4 space-y-4 md:space-y-0 md:space-x-4">
-                <Avatar className='w-12 h-12 md:w-16 md:h-16' src={user?.photoURL || DefaultAvatar} />
-                <ContentInput post={post} />
-            </div>
+  return (
+    <article className="mx-auto max-w-3xl rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-100 dark:bg-gray-800 dark:ring-gray-700 sm:p-8">
+      {/* Tags */}
+      {post.tags?.length > 0 && (
+        <div className="mb-3 flex flex-wrap gap-1.5">
+          {post.tags.slice(0, 5).map((tag) => (
+            <span key={tag} className="chip">
+              #{tag}
+            </span>
+          ))}
         </div>
-    );
-};
+      )}
 
+      {/* Title */}
+      <h1 className="text-2xl font-extrabold leading-tight text-gray-900 dark:text-gray-100 sm:text-4xl">
+        {post.title}
+      </h1>
+
+      {/* Author + meta */}
+      <div className="mt-5 flex items-center gap-3">
+        <div className="avatar-ring shrink-0">
+          <Avatar
+            src={post.author.photoURL}
+            className="h-11 w-11 border-2 border-white dark:border-gray-800"
+          />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold text-gray-900 dark:text-gray-100">
+            {post.author.firstName} {post.author.lastName}
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {post.createdAt?.toDate?.().toDateString().slice(4)} ·{" "}
+            {calculateReadingTime(post.content)}
+          </p>
+        </div>
+        <div className="flex items-center gap-1">
+          <BookmarkIcon post={post} />
+          {user && user.uid !== post.author.id && (
+            <ReportButton targetType="post" targetId={post.id} postId={post.id} />
+          )}
+        </div>
+      </div>
+
+      {/* Cover image */}
+      {post.imageURL && (
+        <div className="mt-6 overflow-hidden rounded-2xl">
+          <Image
+            src={post.imageURL}
+            alt={`Cover for ${post.title}`}
+            className="max-h-[460px] w-full object-cover"
+            width={1000}
+            height={560}
+            sizes="(max-width: 768px) 100vw, 768px"
+            priority
+          />
+        </div>
+      )}
+
+      {/* Content */}
+      <div
+        className="post-content mt-6"
+        dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content) }}
+      />
+
+      {/* Engagement */}
+      <div className="mt-6 border-t border-gray-100 pt-4 dark:border-gray-700">
+        <Reaction post={post} />
+      </div>
+
+      {/* Comment composer */}
+      <div className="mt-4 flex items-start gap-3">
+        <div className="avatar-ring mt-1 shrink-0">
+          <Avatar
+            src={user?.photoURL}
+            className="h-9 w-9 border-2 border-white dark:border-gray-800"
+          />
+        </div>
+        <div className="flex-1">
+          <ContentInput post={post} />
+        </div>
+      </div>
+    </article>
+  );
+};
 
 export default PostDetails;
