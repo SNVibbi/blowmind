@@ -1,49 +1,79 @@
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import Logo from "../../public/img/Blow-Mind.png";
-import '@fortawesome/fontawesome-free/css/all.min.css';
+import "@fortawesome/fontawesome-free/css/all.min.css";
+
+const COLUMNS = [
+  {
+    heading: "Explore",
+    links: [
+      { label: "Feed", href: "/blog" },
+      { label: "Write a post", href: "/create-post" },
+      { label: "Bookmarks", href: "/bookmark" },
+    ],
+  },
+  {
+    heading: "Company",
+    links: [
+      { label: "About", href: "/about" },
+      { label: "Contact", href: "/contact" },
+    ],
+  },
+  {
+    heading: "Account",
+    links: [
+      { label: "Log in", href: "/login" },
+      { label: "Sign up", href: "/signup" },
+      { label: "Settings", href: "/settings" },
+    ],
+  },
+];
 
 export default function Footer() {
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  const scrollToTop = () =>
+    window.scrollTo({ top: 0, behavior: "smooth" });
 
   return (
-    <footer className="py-4 px-2 md:py-8 md:px-4 lg:py-10 lg:px-6 bg-gray-800 text-white">
-      <div className="max-w-3xl mx-auto md:max-w-6xl grid grid-cols-1 md:grid-cols-4 gap-8">
-        <div className="flex items-center gap-4 text-indigo-600">
-          <span className="text-xl md:text-2xl font-bold">
-            <Image src={Logo} alt="Logo" className="text-2xl" width={150} height={100} />
-          </span>
+    <footer className="border-t border-gray-200 bg-white text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+      <div className="mx-auto grid max-w-6xl grid-cols-2 gap-8 px-6 py-12 md:grid-cols-4">
+        <div className="col-span-2 md:col-span-1">
+          <Image src={Logo} alt="BlowMind" width={140} height={46} />
+          <p className="mt-3 max-w-xs text-sm">
+            Write, read, and connect with great minds.
+          </p>
         </div>
-        <div className="flex space-x-6 justify-evenly md:space-x-20 lg:space-x-32">
-              <ul>
-                <h5 className="text-xl font-bold mb-4">Explore</h5>
-                <li className="mb-2">Community</li>
-                <li className="mb-2">Trending blogs</li>
-                <li className="mb-2">Blowmind for teams</li>
-              </ul>
-              <ul>
-                <h5 className="text-xl font-bold mb-4">Support</h5>
-                <li className="mb-2">Support docs</li>
-                <li className="mb-2">Join Slack</li>
-                <li className="mb-2">Contact</li>
-              </ul>
-              <ul>
-                <h5 className="text-xl font-bold mb-4">Official blog</h5>
-                <li className="mb-2">Community blog</li>
-                <li className="mb-2">Engineering blog</li>
-              </ul>
-        </div>
+        {COLUMNS.map((col) => (
+          <div key={col.heading}>
+            <h5 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-900 dark:text-gray-100">
+              {col.heading}
+            </h5>
+            <ul className="space-y-2 text-sm">
+              {col.links.map((link) => (
+                <li key={link.label}>
+                  <Link
+                    href={link.href}
+                    className="hover:text-brand-600 dark:hover:text-brand-400"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
       </div>
-      <div className="mt-8 text-center text-gray-400">
-        <p>&copy; 2024 by KontriDev. All rights reserved.</p>
-        <button 
-          onClick={scrollToTop} 
-          className="p-2 mt-4 bg-indigo-600 text-white rounded-full hover:bg-indigo-700"
-        >
-          <i className="fas fa-arrow-up"></i>
-        </button>
+      <div className="border-t border-gray-200 py-6 dark:border-gray-800">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 text-sm">
+          <p>&copy; {new Date().getFullYear()} BlowMind. All rights reserved.</p>
+          <button
+            onClick={scrollToTop}
+            aria-label="Back to top"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-600 text-white hover:bg-brand-700"
+          >
+            <i className="fas fa-arrow-up" aria-hidden="true"></i>
+          </button>
+        </div>
       </div>
     </footer>
   );

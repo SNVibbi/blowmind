@@ -288,6 +288,30 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // ------------------------------------------------------------------
+    // contactMessages/{id} — public "contact us" form submissions
+    // ------------------------------------------------------------------
+    match /contactMessages/{id} {
+      // Anyone (incl. signed-out visitors) may submit; validated tightly.
+      allow create: if request.resource.data.name is string
+        && request.resource.data.name.size() >= 2
+        && request.resource.data.name.size() <= 100
+        && request.resource.data.email is string
+        && request.resource.data.email.size() <= 200
+        && request.resource.data.message is string
+        && request.resource.data.message.size() >= 10
+        && request.resource.data.message.size() <= 5000
+        && request.resource.data.status == 'new'
+        && request.resource.data.keys().hasOnly([
+          'name', 'email', 'message', 'status', 'createdAt'
+        ]);
+      // Only moderators/admins can read or triage submissions.
+      allow read: if isModerator();
+      allow update: if isModerator()
+        && affectedKeys().hasOnly(['status']);
+      allow delete: if false;
+    }
+
     // Everything not matched above is denied (Firestore default), stated
     // here explicitly for reviewers.
     match /{document=**} {

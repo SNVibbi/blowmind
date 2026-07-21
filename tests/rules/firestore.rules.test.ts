@@ -909,6 +909,49 @@ describe("server-only collections", () => {
   });
 });
 
+describe("contactMessages collection", () => {
+  const valid = {
+    name: "Jane Doe",
+    email: "jane@example.com",
+    message: "Hello, I have a question about the platform.",
+    status: "new",
+    createdAt: new Date(),
+  };
+
+  it("allows anyone (even signed-out) to submit a valid message", async () => {
+    await assertSucceeds(setDoc(doc(db(null), "contactMessages", "m1"), valid));
+  });
+
+  it("rejects a too-short message", async () => {
+    await assertFails(
+      setDoc(doc(db(null), "contactMessages", "m2"), { ...valid, message: "hi" })
+    );
+  });
+
+  it("rejects extra/unexpected fields", async () => {
+    await assertFails(
+      setDoc(doc(db(null), "contactMessages", "m3"), { ...valid, isAdmin: true })
+    );
+  });
+
+  it("denies a normal user reading submissions", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "contactMessages", "m4"), valid);
+    });
+    await assertFails(getDoc(doc(db(ALICE), "contactMessages", "m4")));
+  });
+
+  it("lets a moderator read and triage submissions", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "contactMessages", "m5"), valid);
+    });
+    await assertSucceeds(getDoc(doc(moderatorDb("mod-uid"), "contactMessages", "m5")));
+    await assertSucceeds(
+      updateDoc(doc(moderatorDb("mod-uid"), "contactMessages", "m5"), { status: "read" })
+    );
+  });
+});
+
 describe("unknown collections", () => {
   it("denies reads and writes to unmatched collections", async () => {
     await assertFails(getDoc(doc(db(ALICE), "admin-secrets", "s1")));
