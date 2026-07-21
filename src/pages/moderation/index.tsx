@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import withModerator from "@/hoc/withModerator";
+import AppShell from "@/components/AppShell";
 import { useAuthContext } from "@/context/AuthContext";
 import {
   fetchOpenReports,
@@ -112,7 +113,8 @@ function ModerationQueue() {
   ];
 
   return (
-    <main className="mx-auto max-w-3xl p-4 sm:p-6">
+    <AppShell>
+    <main className="mx-auto max-w-3xl px-4 py-6">
       <header className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
           Moderation
@@ -236,6 +238,7 @@ function ModerationQueue() {
         </>
       )}
     </main>
+    </AppShell>
   );
 }
 
