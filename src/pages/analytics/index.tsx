@@ -38,7 +38,7 @@ function Analytics() {
         <AppShell>
         <div className="mx-auto max-w-3xl px-4 py-6">
             <button 
-                className="flex items-center gap-2 text-blue-500" 
+                className="flex items-center gap-2 text-brand-600" 
                 onClick={() => router.back()}
             >
                 <i className="fas fa-arrow-left"></i>
@@ -83,8 +83,8 @@ function Analytics() {
 
                     <ul className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <li className="flex items-center gap-4 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
-                            <div className="bg-blue-100 dark:bg-blue-900 p-2 rounded-full">
-                                <i className="fas fa-eye text-blue-500 dark:text-blue-300"></i>
+                            <div className="bg-brand-100 dark:bg-brand-900 p-2 rounded-full">
+                                <i className="fas fa-eye text-brand-600 dark:text-brand-300"></i>
                             </div>
                             <div>
                                 <span className="text-gray-800 dark:text-gray-200">Unique views</span>
@@ -92,8 +92,8 @@ function Analytics() {
                             </div>
                         </li>
                         <li className="flex items-center gap-4 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
-                            <div className="bg-blue-100 dark:bg-blue-900 p-2 rounded-full">
-                                <i className="fas fa-expand-arrows-alt text-blue-500 dark:text-blue-300"></i>
+                            <div className="bg-brand-100 dark:bg-brand-900 p-2 rounded-full">
+                                <i className="fas fa-expand-arrows-alt text-brand-600 dark:text-brand-300"></i>
                             </div>
                             <div>
                                 <span className="text-gray-800 dark:text-gray-200">Details expands</span>
@@ -101,8 +101,8 @@ function Analytics() {
                             </div>
                         </li>
                         <li className="flex items-center gap-4 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
-                            <div className="bg-blue-100 dark:bg-blue-900 p-2 rounded-full">
-                                <i className="fas fa-bookmark text-blue-500 dark:text-blue-300"></i>
+                            <div className="bg-brand-100 dark:bg-brand-900 p-2 rounded-full">
+                                <i className="fas fa-bookmark text-brand-600 dark:text-brand-300"></i>
                             </div>
                             <div>
                                 <span className="text-gray-800 dark:text-gray-200">Bookmarks</span>

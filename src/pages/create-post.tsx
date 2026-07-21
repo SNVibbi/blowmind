@@ -101,7 +101,8 @@ function Create(): ReactElement {
         const author = {
             firstName: CurrentUser?.firstName || "Anonymous",
             lastName: CurrentUser?.lastName || "User",
-            photoURL: CurrentUser?.photoURL || "",
+            // User docs store `photoUrl`; fall back to the auth photoURL.
+            photoURL: CurrentUser?.photoUrl || CurrentUser?.photoURL || user?.photoURL || "",
             id: CurrentUser?.id || user?.uid || '',
             headline: CurrentUser?.headline || "",
         };
@@ -206,11 +207,11 @@ function Create(): ReactElement {
                         onChange={handleFileChange}
                         className="hidden" 
                     />
-                    <label htmlFor="file" className="cursor-pointer text-3xl text-blue-600 dark:text-blue-400" title="Add Image">
+                    <label htmlFor="file" className="cursor-pointer text-3xl text-brand-600 dark:text-brand-400" title="Add Image">
                         <i className="fas fa-image"></i>
                     </label>
                     {isVideoEnable && (
-                        <label htmlFor="file" className="cursor-pointer text-3xl text-blue-600 dark:text-blue-400" title="Add Video">
+                        <label htmlFor="file" className="cursor-pointer text-3xl text-brand-600 dark:text-brand-400" title="Add Video">
                             <i className="fas fa-video"></i>
                         </label>
                     )}

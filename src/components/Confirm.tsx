@@ -66,7 +66,7 @@ export default function Confirm({
         <div className="mt-6 flex justify-center gap-4">
           <button
             onClick={() => setIsConfirm(false)}
-            className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
+            className="bg-brand-600 text-white py-2 px-4 rounded hover:bg-brand-700"
           >
             Cancel
           </button>

@@ -98,7 +98,7 @@ export default function BlogNavbar({ screenWidth, mobileMenu, setMobileMenu }: B
                                 </Link>
                             </li>
                         </ul>
-                        <NavbarOption />
+                        {user && <NavbarOption />}
                         <button
                             onClick={toggleTheme}
                             className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 ml-4"
@@ -110,15 +110,18 @@ export default function BlogNavbar({ screenWidth, mobileMenu, setMobileMenu }: B
                                 <i className="fas fa-sun"></i>
                             )}
                         </button>
-                        {user && (
-                            <Link href="/profile">
-                                <button className="flex items-center ml-2" aria-label="Profile">
-                                    <span className="text-gray-800 dark:text-gray-300 hidden sm:inline-block">
-                                        {user.displayName}
-                                    </span>
-                                    <Avatar src={user.photoURL} alt={user.displayName || "User Avatar"}  />
-                                </button>
+                        {user ? (
+                            <Link href="/profile" className="ml-2 flex items-center gap-2" aria-label="Profile">
+                                <span className="text-gray-800 dark:text-gray-300 hidden sm:inline-block">
+                                    {user.displayName}
+                                </span>
+                                <Avatar src={user.photoURL} alt={user.displayName || "User Avatar"} />
                             </Link>
+                        ) : (
+                            <div className="ml-4 flex items-center gap-2">
+                                <Link href="/login" className="btn-secondary">Log in</Link>
+                                <Link href="/signup" className="btn-primary">Sign up</Link>
+                            </div>
                         )}
                     </div>
                 )}
@@ -145,32 +148,49 @@ export default function BlogNavbar({ screenWidth, mobileMenu, setMobileMenu }: B
                             <Image src={Logo} alt="Logo" width={70} height={70} />
                         </button>
                     </Link>
-                    <span className="text-gray-800 dark:text-indigo-800 mb-2">
+                    <span className="mb-2 text-gray-700 dark:text-gray-300">
                         {greeting}, {user ? user.displayName : "Guest"}!
                     </span>
-                    <ul className="flex flex-col items-start mt-2 gap-4">
+                    <ul className="mt-2 flex flex-col items-start gap-4">
                         <li>
-                            <Link href="/blog">
-                                <button
-                                    onClick={handleMenuItemClick}
-                                    className="text-gray-800 dark:text-indigo-800 hover:text-indigo-600 dark:hover:text-indigo-300 transition-colors duration-300"
-                                >
-                                    Explore
-                                </button>
+                            <Link
+                                href="/blog"
+                                onClick={handleMenuItemClick}
+                                className="text-gray-800 hover:text-brand-600 dark:text-gray-200 dark:hover:text-brand-400"
+                            >
+                                Explore
                             </Link>
                         </li>
-                        <NavbarOption />
-                        {user && (
-                            <Link href="/profile">
-                                <button
-                                    onClick={handleMenuItemClick}
-                                    className="flex items-center"
-                                    aria-label="Profile"
-                                >
-                                    <span className="text-gray-900 dark:text-indigo-800 flex">{user.displayName}</span>
-                                    <Avatar src={user.photoURL} alt={user.displayName || "User Avatar"} />
-                                </button>
-                            </Link>
+                        {user ? (
+                            <>
+                                <li>
+                                    <Link href="/create-post" onClick={handleMenuItemClick} className="text-gray-800 hover:text-brand-600 dark:text-gray-200">Write a post</Link>
+                                </li>
+                                <li>
+                                    <Link href="/bookmark" onClick={handleMenuItemClick} className="text-gray-800 hover:text-brand-600 dark:text-gray-200">Bookmarks</Link>
+                                </li>
+                                <li>
+                                    <Link href="/notifications" onClick={handleMenuItemClick} className="text-gray-800 hover:text-brand-600 dark:text-gray-200">Notifications</Link>
+                                </li>
+                                <li>
+                                    <Link href="/settings" onClick={handleMenuItemClick} className="text-gray-800 hover:text-brand-600 dark:text-gray-200">Settings</Link>
+                                </li>
+                                <li>
+                                    <Link href="/profile" onClick={handleMenuItemClick} className="flex items-center gap-2 text-gray-900 dark:text-gray-100" aria-label="Profile">
+                                        <Avatar src={user.photoURL} alt={user.displayName || "User Avatar"} />
+                                        <span>{user.displayName}</span>
+                                    </Link>
+                                </li>
+                            </>
+                        ) : (
+                            <>
+                                <li>
+                                    <Link href="/login" onClick={handleMenuItemClick} className="btn-secondary">Log in</Link>
+                                </li>
+                                <li>
+                                    <Link href="/signup" onClick={handleMenuItemClick} className="btn-primary">Sign up</Link>
+                                </li>
+                            </>
                         )}
                         <button
                             onClick={() => {
