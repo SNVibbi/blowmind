@@ -892,6 +892,58 @@ describe("audit log", () => {
   });
 });
 
+describe("notifications subcollection", () => {
+  async function seedNotif(ownerUid: string) {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), "users", ownerUid, "notifications", "n1"),
+        {
+          type: "like",
+          actorUid: BOB,
+          actorName: "Bob",
+          actorPhoto: "",
+          postId: "post1",
+          postTitle: "Hi",
+          text: "liked your post",
+          read: false,
+          createdAt: new Date(),
+        }
+      );
+    });
+  }
+
+  it("lets the owner read and mark their notifications read", async () => {
+    await seedNotif(ALICE);
+    await assertSucceeds(
+      getDoc(doc(db(ALICE), "users", ALICE, "notifications", "n1"))
+    );
+    await assertSucceeds(
+      updateDoc(doc(db(ALICE), "users", ALICE, "notifications", "n1"), {
+        read: true,
+      })
+    );
+  });
+
+  it("denies reading another user's notifications", async () => {
+    await seedNotif(ALICE);
+    await assertFails(
+      getDoc(doc(db(BOB), "users", ALICE, "notifications", "n1"))
+    );
+  });
+
+  it("denies clients creating notifications (Functions only)", async () => {
+    await assertFails(
+      setDoc(doc(db(BOB), "users", ALICE, "notifications", "n2"), {
+        type: "like",
+        actorUid: BOB,
+        text: "spam",
+        read: false,
+        createdAt: new Date(),
+      })
+    );
+  });
+});
+
 describe("server-only collections", () => {
   it("denies clients any access to rateLimits, rateLimitEvents, spamEvents", async () => {
     // These are written only by Cloud Functions (Admin SDK bypasses rules).

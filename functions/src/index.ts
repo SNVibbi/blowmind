@@ -124,6 +124,35 @@ async function logSpamEvent(
   });
 }
 
+// ---- Notifications ---------------------------------------------------
+interface PostMeta {
+  authorId?: string;
+  title?: string;
+}
+
+async function getPostMeta(postId: string): Promise<PostMeta> {
+  const snap = await db.doc(`posts/${postId}`).get();
+  if (!snap.exists) return {};
+  const data = snap.data() ?? {};
+  return { authorId: data.author?.id ?? data.userId, title: data.title };
+}
+
+/** Write a notification into a recipient's subcollection. Never throws. */
+async function notify(
+  recipientUid: string,
+  payload: Record<string, unknown>
+): Promise<void> {
+  try {
+    await db.collection(`users/${recipientUid}/notifications`).add({
+      ...payload,
+      read: false,
+      createdAt: FieldValue.serverTimestamp(),
+    });
+  } catch (err) {
+    console.warn("notify failed:", (err as Error).message);
+  }
+}
+
 /**
  * Content-based spam check: stateless heuristics plus a stateful
  * duplicate-content check (same text reposted within a short window).
@@ -160,7 +189,23 @@ async function checkContentSpam(
 // ---- Likes -----------------------------------------------------------
 export const onLikeCreated = onDocumentCreated(
   "posts/{postId}/likes/{uid}",
-  (event) => bumpPostCounter(event.params.postId, "likeCount", 1)
+  async (event) => {
+    const { postId, uid } = event.params;
+    await bumpPostCounter(postId, "likeCount", 1);
+
+    const { authorId, title } = await getPostMeta(postId);
+    if (authorId && authorId !== uid) {
+      await notify(authorId, {
+        type: "like",
+        actorUid: uid,
+        actorName: event.data?.get("displayName") || "Someone",
+        actorPhoto: event.data?.get("photoURL") || "",
+        postId,
+        postTitle: title || "",
+        text: "liked your post",
+      });
+    }
+  }
 );
 export const onLikeDeleted = onDocumentDeleted(
   "posts/{postId}/likes/{uid}",
@@ -189,6 +234,21 @@ export const onCommentCreated = onDocumentCreated(
     if (spamReason) {
       await event.data?.ref.delete();
       await logSpamEvent(uid, spamReason, event.data!.ref.path);
+      return;
+    }
+
+    // Notify the post author (unless they commented on their own post).
+    const { authorId, title } = await getPostMeta(postId);
+    if (authorId && authorId !== uid) {
+      await notify(authorId, {
+        type: "comment",
+        actorUid: uid,
+        actorName: event.data?.get("displayName") || "Someone",
+        actorPhoto: event.data?.get("photoURL") || "",
+        postId,
+        postTitle: title || "",
+        text: "commented on your post",
+      });
     }
   }
 );
