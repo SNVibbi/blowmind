@@ -82,9 +82,9 @@ function Profile() {
                 />
               </div>
               <div className="mb-2 flex gap-2">
-                <Link href="/interest" className="btn-secondary">
-                  <i className="fas fa-sliders" aria-hidden="true"></i>
-                  <span className="hidden sm:inline">Edit interests</span>
+                <Link href="/profile/edit" className="btn-secondary">
+                  <i className="fas fa-pen" aria-hidden="true"></i>
+                  <span className="hidden sm:inline">Edit profile</span>
                 </Link>
                 <button onClick={handleShare} className="btn-primary">
                   <i className="fas fa-share-nodes" aria-hidden="true"></i>
