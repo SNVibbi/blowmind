@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import withAuth from "../../hoc/withAuth";
+import AppShell from "../../components/AppShell";
 import { useAuthContext } from "../../context/AuthContext";
 import { fetchBlocks, unblockUser, BlockEntry } from "../../lib/blockService";
 import { normalizeUserProfile } from "../../lib/userService";
@@ -69,7 +70,8 @@ function Settings() {
   };
 
   return (
-    <main className="mx-auto max-w-2xl p-4 sm:p-6">
+    <AppShell>
+    <main className="mx-auto max-w-2xl px-4 py-6">
       <h1 className="mb-1 text-2xl font-bold text-gray-900 dark:text-gray-100">
         Settings
       </h1>
@@ -119,6 +121,7 @@ function Settings() {
         </ul>
       </section>
     </main>
+    </AppShell>
   );
 }
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import withAuth from "../hoc/withAuth";
+import AppShell from "../components/AppShell";
 import { useAuthContext } from "../context/AuthContext";
 import { submitAppeal, fetchMyAppeal, Appeal } from "../lib/moderationService";
 import { getErrorMessage } from "../lib/errors";
@@ -43,7 +44,8 @@ function AppealPage() {
   };
 
   return (
-    <main className="mx-auto max-w-lg p-4 sm:p-6">
+    <AppShell>
+    <main className="mx-auto max-w-lg px-4 py-6">
       <h1 className="mb-1 text-2xl font-bold text-gray-900 dark:text-gray-100">
         Appeal a suspension
       </h1>
@@ -93,6 +95,7 @@ function AppealPage() {
         </form>
       )}
     </main>
+    </AppShell>
   );
 }
 
