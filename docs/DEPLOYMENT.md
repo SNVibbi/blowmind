@@ -1,5 +1,41 @@
 # Deployment & Rollback
 
+## Go-live runbook (project: blowmind-6872b)
+
+Do these **in order** — the order matters (stricter rules assume the new
+frontend; functions need billing enabled).
+
+1. **Vercel env vars** → set all `NEXT_PUBLIC_FIREBASE_*` (+ optional
+   `NEXT_PUBLIC_SITE_URL`) and **redeploy**. Confirm the new site loads.
+   (See "Setting the variables in Vercel" below.)
+2. **Firestore indexes** — ✅ already deployed
+   (`firebase deploy --only firestore:indexes --project blowmind-6872b`).
+   Additive/safe; can run anytime.
+3. **Security rules** — deploy once the new frontend from step 1 is live:
+   ```bash
+   firebase deploy --only firestore:rules,storage --project blowmind-6872b
+   ```
+   ⚠ This overwrites the console rules (which were never in the repo, so
+   back them up from the console first if you want a rollback). Our rules
+   are covered by 75 tests and assume the subcollection data model.
+4. **Cloud Functions** — requires the **Blaze** (pay-as-you-go) plan;
+   counters, rate limiting, spam checks, and expiry cleanup only run once
+   deployed:
+   ```bash
+   npm --prefix functions run build
+   firebase deploy --only functions --project blowmind-6872b
+   ```
+5. **First admin** — after you've signed into the live site at least once
+   (so your auth user exists), grant yourself admin with a service
+   account key (see [scripts/set-admin.mjs](../scripts/set-admin.mjs)).
+   Then you can manage other moderators from the app via the setUserRole
+   function. Sign out/in afterward to refresh your token.
+6. **Data migration** — only if you have existing posts in the old
+   embedded-array format. Back up first
+   (`gcloud firestore export …`), then run
+   [scripts/migrate-to-subcollections.mjs](../scripts/migrate-to-subcollections.mjs)
+   (emulator dry-run first).
+
 ## Environments
 
 | Environment | Firebase project | Hosting |
