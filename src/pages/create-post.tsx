@@ -1,5 +1,6 @@
 import { useAuthContext } from "../context/AuthContext";
 import withAuth from "../hoc/withAuth";
+import AppShell from "../components/AppShell";
 import { useCategory } from "../hooks/useCategory";
 import { useDocument } from "../hooks/useDocument";
 import { useFirestore } from "../hooks/useFirestore";
@@ -131,7 +132,10 @@ function Create(): ReactElement {
     };
 
     return (
-        <form className="p-6 space-y-6 bg-white dark:bg-gray-800 rounded-lg shadow-md" onSubmit={handleSubmit}>
+        <AppShell>
+        <div className="mx-auto max-w-2xl px-4 py-6">
+        <h1 className="mb-4 text-2xl font-bold text-gray-900 dark:text-gray-100">Write a post</h1>
+        <form className="p-6 space-y-6 bg-white dark:bg-gray-800 rounded-2xl shadow-sm ring-1 ring-gray-100 dark:ring-gray-700" onSubmit={handleSubmit}>
             {response.error && <div className="text-red-600" role="alert">{response.error}</div>}
             {restored && (title || content) && (
                 <div className="flex items-center justify-between rounded-md bg-brand-50 dark:bg-brand-900/40 px-3 py-2 text-sm text-brand-700 dark:text-brand-200">
@@ -214,6 +218,8 @@ function Create(): ReactElement {
             )}
             {fileError && <div className="text-red-600 mt-2">{fileError}</div>}
         </form>
+        </div>
+        </AppShell>
     );
 }
 

@@ -1,8 +1,8 @@
 import Avatar from "../../components/Avatar";
 import withAuth from "../../hoc/withAuth";
+import AppShell from "../../components/AppShell";
 import Reaction from "../../components/Reaction";
 import { useDocument } from "../../hooks/useDocument";
-import useTheme from "../../hooks/useTheme";
 import { Post } from "../../Types";
 import { sanitizeHtml } from "../../lib/sanitize";
 import { getPostCounts } from "../../lib/postService";
@@ -14,23 +14,29 @@ import Skeleton from "react-loading-skeleton";
 function Analytics() {
     const router = useRouter();
     const { id } = router.query;
-    const { changeMode } = useTheme();
     const { error, document: post } = useDocument<Post>("posts", id as string);
 
     if (error) {
-        return <div className="text-red-600">{error}</div>;
+        return (
+            <AppShell>
+                <div className="mx-auto max-w-3xl px-4 py-6 text-red-600" role="alert">{error}</div>
+            </AppShell>
+        );
     }
 
     if (!post) {
         return (
-            <div className="loading">
-                <Skeleton />
-            </div>
+            <AppShell>
+                <div className="mx-auto max-w-3xl px-4 py-6">
+                    <Skeleton count={4} />
+                </div>
+            </AppShell>
         );
     }
 
     return(
-        <div className={`analytics ${changeMode}`}>
+        <AppShell>
+        <div className="mx-auto max-w-3xl px-4 py-6">
             <button 
                 className="flex items-center gap-2 text-blue-500" 
                 onClick={() => router.back()}
@@ -109,6 +115,7 @@ function Analytics() {
             )}
 
         </div>
+        </AppShell>
     )
 }
 

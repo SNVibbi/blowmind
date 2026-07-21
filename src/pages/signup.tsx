@@ -10,7 +10,7 @@ import Link from "next/link";
 import GoogleButton from "../components/GoogleButton";
 import Select from "react-select"; 
 import '@fortawesome/fontawesome-free/css/all.min.css';
-import MainNavbar from "../components/MainNavbar";
+import PublicHeader from "../components/marketing/PublicHeader";
 import Footer from "../components/Footer";
 
 const userCategories: UserCategoryProps[] = [
@@ -77,7 +77,7 @@ const Signup: React.FC = () => {
 
     return (
         <>
-            <MainNavbar />
+            <PublicHeader />
             <div className="min-h-screen flex flex-col items-center justify-center bg-gray-200 dark:bg-gray-900 py-4">
                 <form 
                     onSubmit={handleSubmit} className="bg-gray-200 dark:bg-gray-800 shadow-lg rounded-lg p-4 grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 w-full max-w-4xl"

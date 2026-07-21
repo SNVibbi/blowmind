@@ -9,7 +9,7 @@ import GoogleButton from "../components/GoogleButton";
 import BG from "../../public/img/bg.jpg";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import Footer from "../components/Footer";
-import MainNavbar from "../components/MainNavbar";
+import PublicHeader from "../components/marketing/PublicHeader";
 
 const Login: React.FC = () => {
     const [email, setEmail] = useState<string>("");
@@ -29,7 +29,7 @@ const Login: React.FC = () => {
 
     return (
         <>
-            <MainNavbar />
+            <PublicHeader />
             <div className="min-h-screen flex flex-col items-center justify-center bg-gray-200 dark:bg-gray-900 py-1">
                 <form 
                     onSubmit={handleSubmit} 
