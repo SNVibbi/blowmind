@@ -70,6 +70,14 @@ test("unknown route shows the branded 404", async ({ page }) => {
   await expect(page.getByRole("link", { name: /back to the feed/i })).toBeVisible();
 });
 
+test("auth action page rejects an invalid/missing link", async ({ page }) => {
+  await page.goto("/auth/action");
+  await expect(
+    page.getByRole("heading", { name: /something went wrong/i })
+  ).toBeVisible();
+  await expect(page.getByRole("link", { name: /request a new link/i })).toBeVisible();
+});
+
 test("mobile menu opens on small screens", async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 800 });
   await page.goto("/");

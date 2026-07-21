@@ -86,6 +86,23 @@ production deploy; PRs get preview URLs.
 3. **Redeploy** (Deployments → ⋯ → Redeploy). Existing deployments don't
    pick up new env vars automatically.
 
+## Email action links (password reset / verification)
+
+The app has an in-app handler at **`/auth/action`** that processes
+Firebase email action links (`resetPassword`, `verifyEmail`). For links
+to open there instead of Firebase's default hosted page, set the **custom
+action URL** once:
+
+Firebase Console → **Authentication → Templates** → (any template, e.g.
+Password reset) → pencil/edit → **Customize action URL** →
+`https://<your-domain>/auth/action` (e.g.
+`https://blowmind-6872b.web.app/auth/action` or your Vercel domain) →
+Save. This applies to all email action types.
+
+Reset links expire after 1 hour and are single-use; if a user waited too
+long or already clicked once, the handler shows "link expired — request a
+new one," which is expected.
+
 ## Troubleshooting
 
 ### Vercel build fails: "Missing required Firebase environment variables"

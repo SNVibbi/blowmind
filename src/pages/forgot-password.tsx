@@ -51,7 +51,7 @@ const ForgotPassword: React.FC = () => {
               </p>
               <Link
                 href="/login"
-                className="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400"
+                className="text-brand-600 hover:text-brand-700 dark:text-brand-400"
               >
                 Back to login
               </Link>
@@ -92,14 +92,14 @@ const ForgotPassword: React.FC = () => {
               <button
                 type="submit"
                 disabled={isPending}
-                className="bg-indigo-600 mb-4 text-white w-full py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-primary mb-4 w-full disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isPending ? "Sending…" : "Send reset link"}
               </button>
 
               <Link
                 href="/login"
-                className="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400"
+                className="text-brand-600 hover:text-brand-700 dark:text-brand-400"
               >
                 Back to login
               </Link>
